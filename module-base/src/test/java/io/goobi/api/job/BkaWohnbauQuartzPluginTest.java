@@ -26,7 +26,7 @@ import de.sub.goobi.helper.Helper;
 @PrepareForTest({ ConfigurationHelper.class, Helper.class })
 @PowerMockIgnore({ "javax.management.*", "javax.net.ssl.*", "jdk.internal.reflect.*", "com.sun.org.apache.xerces.*", "javax.xml.*", "org.xml.*",
     "org.w3c.*", "javax.crypto.*", "javax.crypto.JceSecurity" })
-public class KickStartQuartzPluginTest {
+public class BkaWohnbauQuartzPluginTest {
 
     private static String resourcesFolder;
 
@@ -60,13 +60,13 @@ public class KickStartQuartzPluginTest {
 
     @Test
     public void testTitle() throws Exception {
-        KickStartQuartzPlugin job = new HerisQuartzPlugin();
-        assertEquals("intranda_quartz_kick_start", job.getJobName());
+        BkaWohnbauQuartzPlugin job = new HerisQuartzPlugin();
+        assertEquals("intranda_quartz_bka_wohnbau", job.getJobName());
     }
 
     @Test
     public void testConfiguration() throws Exception {
-        KickStartQuartzPlugin plugin = new KickStartQuartzPlugin();
+        BkaWohnbauQuartzPlugin plugin = new BkaWohnbauQuartzPlugin();
         plugin.parseConfiguration();
         assertEquals("test", plugin.getValue());
     }

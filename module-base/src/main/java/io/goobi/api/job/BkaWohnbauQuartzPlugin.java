@@ -10,7 +10,7 @@ import lombok.Getter;
 import lombok.extern.log4j.Log4j2;
 
 @Log4j2
-public class KickStartQuartzPlugin extends AbstractGoobiJob {
+public class BkaWohnbauQuartzPlugin extends AbstractGoobiJob {
     @Getter
     private String value;
 
@@ -23,12 +23,12 @@ public class KickStartQuartzPlugin extends AbstractGoobiJob {
         parseConfiguration();
         // logic goes here
         System.out.println(value);
-        System.out.println("KickStart Plugin executed");
+        System.out.println("BkaWohnbau Plugin executed");
     }
 
     @Override
     public String getJobName() {
-        return "intranda_quartz_kick_start";
+        return "intranda_quartz_bka_wohnbau";
     }
 
     /**
