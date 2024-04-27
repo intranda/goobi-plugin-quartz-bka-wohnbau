@@ -1,13 +1,9 @@
 package io.goobi.api.job;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.List;
 
 import org.easymock.EasyMock;
 import org.junit.Before;
@@ -25,7 +21,7 @@ import de.sub.goobi.helper.Helper;
 @RunWith(PowerMockRunner.class)
 @PrepareForTest({ ConfigurationHelper.class, Helper.class })
 @PowerMockIgnore({ "javax.management.*", "javax.net.ssl.*", "jdk.internal.reflect.*", "com.sun.org.apache.xerces.*", "javax.xml.*", "org.xml.*",
-    "org.w3c.*", "javax.crypto.*", "javax.crypto.JceSecurity" })
+        "org.w3c.*", "javax.crypto.*", "javax.crypto.JceSecurity" })
 public class BkaWohnbauQuartzPluginTest {
 
     private static String resourcesFolder;
@@ -60,7 +56,7 @@ public class BkaWohnbauQuartzPluginTest {
 
     @Test
     public void testTitle() throws Exception {
-        BkaWohnbauQuartzPlugin job = new HerisQuartzPlugin();
+        BkaWohnbauQuartzPlugin job = new BkaWohnbauQuartzPlugin();
         assertEquals("intranda_quartz_bka_wohnbau", job.getJobName());
     }
 
