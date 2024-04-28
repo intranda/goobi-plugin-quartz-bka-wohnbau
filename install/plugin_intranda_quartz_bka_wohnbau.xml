@@ -1,4 +1,20 @@
 <config>
-    <!-- sample parameter -->
-        <value>test</value>
+
+	<!-- content to import, can exist multiple times -->
+	<collection>
+		<name>BWSF</name>
+		<source>/opt/digiverso/import/BKA/Wohnbau/BWSF/</source>
+		<project>Archive_Project</project>
+		<template>Sample_Workflow</template>
+		<type>Monograph</type>
+	</collection>
+
+	<collection>
+		<name>WWF</name>
+		<source>/opt/digiverso/import/BKA/Wohnbau/WWF/</source>
+		<project>Manuscript_Project</project>
+		<template>Sample_Workflow</template>
+		<type>Monograph</type>
+	</collection>
+	
 </config>
