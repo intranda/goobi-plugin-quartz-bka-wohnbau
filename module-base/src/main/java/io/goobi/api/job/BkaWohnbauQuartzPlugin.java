@@ -1,8 +1,15 @@
 package io.goobi.api.job;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.DirectoryStream;
 import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.apache.commons.configuration.HierarchicalConfiguration;
 import org.apache.commons.configuration.XMLConfiguration;
@@ -11,10 +18,17 @@ import org.apache.commons.configuration.tree.xpath.XPathExpressionEngine;
 import org.apache.commons.lang.StringUtils;
 import org.goobi.beans.Institution;
 import org.goobi.beans.Process;
+import org.goobi.beans.Processproperty;
 import org.goobi.beans.Project;
 import org.goobi.beans.Step;
 import org.goobi.production.flow.jobs.AbstractGoobiJob;
 import org.goobi.production.flow.statistics.hibernate.FilterHelper;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.exc.StreamReadException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.DatabindException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.sub.goobi.config.ConfigPlugins;
 import de.sub.goobi.helper.BeanHelper;
@@ -22,9 +36,11 @@ import de.sub.goobi.helper.NIOFileUtils;
 import de.sub.goobi.helper.ScriptThreadWithoutHibernate;
 import de.sub.goobi.helper.StorageProvider;
 import de.sub.goobi.helper.enums.StepStatus;
-import de.sub.goobi.helper.exceptions.DAOException;
 import de.sub.goobi.persistence.managers.ProcessManager;
 import de.sub.goobi.persistence.managers.ProjectManager;
+import de.sub.goobi.persistence.managers.PropertyManager;
+import io.goobi.api.job.jsonmodel.BkaFile;
+import io.goobi.api.job.jsonmodel.DeliveryMetadata;
 import lombok.extern.log4j.Log4j2;
 import ugh.dl.DigitalDocument;
 import ugh.dl.DocStruct;
@@ -33,19 +49,22 @@ import ugh.dl.Metadata;
 import ugh.dl.Prefs;
 import ugh.exceptions.DocStructHasNoTypeException;
 import ugh.exceptions.MetadataTypeNotAllowedException;
-import ugh.exceptions.PreferencesException;
-import ugh.exceptions.TypeNotAllowedForParentException;
 import ugh.fileformats.mets.MetsMods;
 
 @Log4j2
 public class BkaWohnbauQuartzPlugin extends AbstractGoobiJob {
+
+    private static final DateTimeFormatter formatterDateTime = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm:ss");
+    private static final String PROPERTY = "DeliveryHistory";
+    private ObjectMapper om = new ObjectMapper();
+    private XMLConfiguration config;
 
     /**
      * When called, this method gets executed
      */
     @Override
     public void execute() {
-        // initialize configuration and run through each content block to analyse
+        // initialize configuration and run through each content block to analyze
         List<BkaWohnbauCollection> collections = parseConfiguration();
         for (BkaWohnbauCollection collection : collections) {
             analyseContent(collection);
@@ -60,10 +79,10 @@ public class BkaWohnbauQuartzPlugin extends AbstractGoobiJob {
      * @param source
      */
     private void analyseContent(BkaWohnbauCollection collection) {
-        System.out.println("Analysing content for: " + collection.getProject() + " from " + collection.getSource());
         log.debug("Analysing content for: " + collection.getProject() + " from " + collection.getSource());
 
         // run through sub-folders
+        // TODO: Adapt this to list the files from an S3 bucket
         List<Path> folders = StorageProvider.getInstance().listFiles(collection.getSource(), NIOFileUtils.folderFilter);
         for (Path folder : folders) {
 
@@ -74,21 +93,49 @@ public class BkaWohnbauQuartzPlugin extends AbstractGoobiJob {
                 deliveryNumber = "00";
             }
             String identifier = collection.getName() + "_" + baseName;
-            System.out.println("Import from folder " + folder + " into process " + baseName + " as delivery " + deliveryNumber);
             log.debug("Import from folder " + folder + " into process " + baseName + " as delivery " + deliveryNumber);
 
             // find out if a process for this item exists already
             List<Process> processes = findProcesses(baseName);
             if (processes.size() == 0) {
-                System.out.println("no process found that matches, create a new one");
                 log.debug("no process found that matches, create a new one");
                 createNewProcess(collection, identifier, folder, deliveryNumber);
             } else {
-                System.out.println("process does exist already, trying to update it");
                 log.debug("process does exist already, trying to update it");
-                //updateExistingProcess(content, identifier, folder, deliveryNumber, processes.get(0));
+                updateExistingProcess(collection, identifier, folder, deliveryNumber, processes.get(0));
             }
         }
+    }
+
+    /**
+     * Update an existing process for a new delivery
+     * 
+     * @param collection
+     * @param identifier
+     * @param folder
+     * @param deliveryNumber
+     * @param process
+     */
+    private void updateExistingProcess(BkaWohnbauCollection collection, String identifier, Path folder, String deliveryNumber, Process process) {
+        try {
+
+            // add a new delivery into the json-Property
+            for (Processproperty pp : process.getEigenschaften()) {
+                if (PROPERTY.equals(pp.getTitel())) {
+                    List<Delivery> dlist;
+                    dlist = om.readValue(pp.getWert(), new TypeReference<List<Delivery>>() {
+                    });
+                    dlist.add(new Delivery(deliveryNumber, LocalDateTime.now().format(formatterDateTime)));
+                    String historyJson = om.writeValueAsString(dlist);
+                    pp.setWert(historyJson);
+                    PropertyManager.saveProcessProperty(pp);
+                    break;
+                }
+            }
+        } catch (JsonProcessingException e) {
+            log.error("Error occured while updating an existing process property for process " + process.getTitel(), e);
+        }
+
     }
 
     /**
@@ -97,8 +144,21 @@ public class BkaWohnbauQuartzPlugin extends AbstractGoobiJob {
      * @param project
      * @param source
      */
-    private void createNewProcess(BkaWohnbauCollection collection, String identifier, Path folder, String deliveryNumber) {
+    private void createNewProcess(BkaWohnbauCollection collection, String identifier, Path s3folder, String deliveryNumber) {
         try {
+
+            // Download the full folder of json, pdf and fulltext files
+            // TODO: Implement the download of all files into a temporary folder here
+            Path folder = s3folder;
+
+            // first try to read the json file
+            List<Path> jsonfiles = StorageProvider.getInstance().listFiles(folder.toString(), wohnbauJsonFilter);
+            if (jsonfiles.size() == 0) {
+                throw new IOException("No JSON file found in folder " + folder + "to import.");
+            }
+            DeliveryMetadata dm = om.readValue(jsonfiles.get(0).toFile(), DeliveryMetadata.class);
+
+            // create a new process
             Process workflow = ProcessManager.getProcessByExactTitle(collection.getTemplate());
             Prefs prefs = workflow.getRegelsatz().getPreferences();
             Fileformat fileformat;
@@ -115,22 +175,72 @@ public class BkaWohnbauQuartzPlugin extends AbstractGoobiJob {
 
             // add the logical basics
             DocStruct logical = dd
-                    .createDocStruct(prefs.getDocStrctTypeByName(collection.getType()));
+                    .createDocStruct(prefs.getDocStrctTypeByName(collection.getPublicationType()));
             dd.setLogicalDocStruct(logical);
 
             // identifier and collection
             addMetadata(logical, prefs, "CatalogIDDigital", identifier);
             addMetadata(logical, prefs, "singleDigCollection", collection.getName());
+            addMetadata(logical, prefs, "BkaGeschaeftszahl", dm.getGeschaeftszahl());
+            addMetadata(logical, prefs, "BkaGrundbuchKg", dm.getGrundbuch().getKg());
+
+            log.debug("==========================================");
+            log.debug(dm.getGeschaeftszahl());
+            log.debug(dm.getFondname());
+            log.debug(dm.getGrundbuch().getKg());
+            log.debug(dm.getGrundbuch().getEz());
+            log.debug(dm.getAdresse().getOrt());
+            log.debug(dm.getAdresse().getPlz());
+
+            DocStruct bkaDelivery = dd
+                    .createDocStruct(prefs.getDocStrctTypeByName(collection.getDeliveryType()));
+            addMetadata(bkaDelivery, prefs, "singleDigCollection", collection.getName());
+
+            for (BkaFile f : dm.getFiles()) {
+                log.debug("-------------------------------------------");
+                log.debug(f.getDokumentArt());
+                log.debug(f.getFilename());
+                DocStruct bkaDocument = dd
+                        .createDocStruct(prefs.getDocStrctTypeByName(collection.getDocumentType()));
+
+            }
+            log.debug("==========================================");
+
+            List<File> pdfFiles = StorageProvider.getInstance()
+                    .listFiles(folder.toString(), (path) -> path.toString().matches(".*.(pdf|PDF)"))
+                    .stream()
+                    .map(Path::toFile)
+                    .collect(Collectors.toList());
 
             // create the process
-            Process process = new BeanHelper().createAndSaveNewProcess(workflow, identifier,
+            BeanHelper bh = new BeanHelper();
+            Process process = bh.createAndSaveNewProcess(workflow, identifier,
                     fileformat);
 
-            // set the project and update process
+            // set the project
             Project proj = ProjectManager.getProjectByName(collection.getProject());
             process.setProjekt(proj);
             process.setProjectId(proj.getId());
+
+            // set delivery as json-property
+            List<Delivery> dlist = new ArrayList<Delivery>();
+            dlist.add(new Delivery(deliveryNumber, LocalDateTime.now().format(formatterDateTime)));
+            String historyJson = om.writeValueAsString(dlist);
+
+            Processproperty pp = new Processproperty();
+            pp.setTitel(PROPERTY);
+            pp.setWert(historyJson);
+            pp.setProzess(process);
+            PropertyManager.saveProcessProperty(pp);
+
+            // update process
             ProcessManager.saveProcess(process);
+
+            // copy media files into the process images folder
+            List<Path> files = StorageProvider.getInstance().listFiles(folder.toString(), wohnbauPdfFilter);
+            for (Path path : files) {
+                StorageProvider.getInstance().copyFile(path, Paths.get(process.getImagesOrigDirectory(false), path.getFileName().toString()));
+            }
 
             // start any open automatic tasks for the created process
             for (Step s : process.getSchritteList()) {
@@ -140,7 +250,7 @@ public class BkaWohnbauQuartzPlugin extends AbstractGoobiJob {
                 }
             }
 
-        } catch (PreferencesException | TypeNotAllowedForParentException | MetadataTypeNotAllowedException | DAOException e) {
+        } catch (Exception e) {
             log.error("Error while creating a new process for content " + collection.getSource(), e);
         }
     }
@@ -187,7 +297,7 @@ public class BkaWohnbauQuartzPlugin extends AbstractGoobiJob {
      * Parse the configuration file
      */
     public List<BkaWohnbauCollection> parseConfiguration() {
-        XMLConfiguration config = ConfigPlugins.getPluginConfig(getJobName());
+        config = ConfigPlugins.getPluginConfig(getJobName());
         config.setExpressionEngine(new XPathExpressionEngine());
         config.setReloadingStrategy(new FileChangedReloadingStrategy());
         List<HierarchicalConfiguration> collectionConfigs = config.configurationsAt("./collection");
@@ -200,10 +310,27 @@ public class BkaWohnbauQuartzPlugin extends AbstractGoobiJob {
             col.setSource(cc.getString("./source", "my source"));
             col.setProject(cc.getString("./project", "my project"));
             col.setTemplate(cc.getString("./template", "my template"));
-            col.setType(cc.getString("./type", "my type"));
+            col.setPublicationType(cc.getString("./publicationType", "my publicationType"));
+            col.setDeliveryType(cc.getString("./deliveryType", "my deliveryType"));
+            col.setDocumentType(cc.getString("./documentType", "my documentType"));
             collections.add(col);
         }
         return collections;
     }
 
+    public static final DirectoryStream.Filter<Path> wohnbauPdfFilter = path -> {
+        String name = path.getFileName().toString();
+        boolean isAllowed = name.toLowerCase().endsWith(".pdf");
+        return isAllowed;
+    };
+
+    public static final DirectoryStream.Filter<Path> wohnbauJsonFilter = path -> {
+        String name = path.getFileName().toString();
+        boolean isAllowed = name.toLowerCase().endsWith(".json");
+        return isAllowed;
+    };
+
+    public static void main(String[] args) throws StreamReadException, DatabindException, IOException {
+
+    }
 }

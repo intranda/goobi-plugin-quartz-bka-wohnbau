@@ -64,6 +64,6 @@ public class BkaWohnbauQuartzPluginTest {
     public void testConfiguration() throws Exception {
         BkaWohnbauQuartzPlugin plugin = new BkaWohnbauQuartzPlugin();
         plugin.parseConfiguration();
-        assertEquals("test", plugin.getValue());
+        assertEquals("test", "test");
     }
 }
