@@ -35,4 +35,7 @@ public class DeliveryMetadata {
 
     @JsonProperty("files")
     private ArrayList<BkaFile> files;
+
+    private String deliveryDate;
+    private String deliveryNumber;
 }

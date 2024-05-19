@@ -52,6 +52,8 @@ import ugh.dl.Metadata;
 import ugh.dl.Prefs;
 import ugh.exceptions.DocStructHasNoTypeException;
 import ugh.exceptions.MetadataTypeNotAllowedException;
+import ugh.exceptions.TypeNotAllowedAsChildException;
+import ugh.exceptions.TypeNotAllowedForParentException;
 import ugh.fileformats.mets.MetsMods;
 
 @Log4j2
@@ -161,6 +163,8 @@ public class BkaWohnbauQuartzPlugin extends AbstractGoobiJob {
             }
             Path jsonFile = jsonfiles.get(0);
             DeliveryMetadata dm = om.readValue(jsonFile.toFile(), DeliveryMetadata.class);
+            dm.setDeliveryDate(getCreationTime(jsonFile));
+            dm.setDeliveryNumber(deliveryNumber);
 
             // create a new process
             Process workflow = ProcessManager.getProcessByExactTitle(collection.getTemplate());
@@ -177,48 +181,54 @@ public class BkaWohnbauQuartzPlugin extends AbstractGoobiJob {
             mdForPath.setValue("file:///");
             physical.addMetadata(mdForPath);
 
-            // add the logical basics
+            // add the logical basics for record
             DocStruct logical = dd
-                    .createDocStruct(prefs.getDocStrctTypeByName(collection.getPublicationType()));
+                    .createDocStruct(prefs.getDocStrctTypeByName(getMapping("recordType")));
             dd.setLogicalDocStruct(logical);
 
-            // identifier and collection
-            addMetadata(logical, prefs, "CatalogIDDigital", identifier);
-            addMetadata(logical, prefs, "singleDigCollection", collection.getName());
-            addMetadata(logical, prefs, "BkaGeschaeftszahl", dm.getGeschaeftszahl());
+            // get basic metadata for record
+            addMetadata(logical, prefs, "identifier", identifier);
+            addMetadata(logical, prefs, "collection", collection.getName());
+            addMetadata(logical, prefs, "fondname", dm.getFondname());
+            addMetadata(logical, prefs, "bundesland", dm.getBundesland());
+            addMetadata(logical, prefs, "geschaeftszahl", dm.getGeschaeftszahl());
+            addMetadata(logical, prefs, "bezugszahlen", dm.getBezugszahlen());
+            addMetadata(logical, prefs, "anmerkungRecord", dm.getAnmerkung());
+
+            // get grundbuch information for record
             if (dm.getGrundbuch() != null) {
-                addMetadata(logical, prefs, "BkaGrundbuchKg", dm.getGrundbuch().getKg());
+                addMetadata(logical, prefs, "grundbuchKg", dm.getGrundbuch().getKg());
+                addMetadata(logical, prefs, "grundbuchEz", dm.getGrundbuch().getEz());
             }
 
-            log.debug("==========================================");
-            log.debug(dm.getGeschaeftszahl());
-            log.debug(dm.getFondname());
-
-            // add the current delivery
-            DocStruct bkaDelivery = dd
-                    .createDocStruct(prefs.getDocStrctTypeByName(collection.getDeliveryType()));
-            addMetadata(bkaDelivery, prefs, "BkaDeliveryNumber", deliveryNumber);
-            addMetadata(bkaDelivery, prefs, "BkaDeliveryDate", getCreationTime(jsonFile));
-            logical.addChild(bkaDelivery);
-
-            for (BkaFile f : dm.getFiles()) {
-                log.debug("-------------------------------------------");
-                log.debug(f.getDokumentArt());
-                log.debug(f.getFilename());
-                DocStruct bkaDocument = dd
-                        .createDocStruct(prefs.getDocStrctTypeByName(collection.getDocumentType()));
-                addMetadata(bkaDocument, prefs, "BkaFileFilename", f.getFilename());
-                addMetadata(bkaDocument, prefs, "BkaFileDokumentArt", f.getDokumentArt());
-                bkaDelivery.addChild(bkaDocument);
+            // get adresse information for record
+            if (dm.getAdresse() != null) {
+                addMetadata(logical, prefs, "adresseGemeindKZ", dm.getAdresse().getGemeindKZ());
+                addMetadata(logical, prefs, "adresseGemeindename", dm.getAdresse().getGemeindename());
+                addMetadata(logical, prefs, "adresseEz", dm.getAdresse().getEz());
+                addMetadata(logical, prefs, "adresseOrt", dm.getAdresse().getOrt());
+                addMetadata(logical, prefs, "adressePlz", dm.getAdresse().getPlz());
+                addMetadata(logical, prefs, "adresseHauptAdresse", dm.getAdresse().getHauptAdresse());
+                addMetadata(logical, prefs, "adresseIdentAdressen", dm.getAdresse().getIdentAdressen());
+                addMetadata(logical, prefs, "adresseStrasse", dm.getAdresse().getStrasse());
+                addMetadata(logical, prefs, "adresseTuer", dm.getAdresse().getTuer());
+                addMetadata(logical, prefs, "adresseStiege", dm.getAdresse().getStiege());
+                addMetadata(logical, prefs, "adresseHistorischeAdresse", dm.getAdresse().getHistorischeAdresse());
+                addMetadata(logical, prefs, "adresseAnmerkung", dm.getAdresse().getAnmerkung());
             }
-            log.debug("==========================================");
 
-            // extract pdf files and create one document per PDF-file
-            List<File> pdfFiles = StorageProvider.getInstance()
-                    .listFiles(folder.toString(), (path) -> path.toString().matches(".*.(pdf|PDF)"))
-                    .stream()
-                    .map(Path::toFile)
-                    .collect(Collectors.toList());
+            // get details information for record
+            if (dm.getDetails() != null) {
+                addMetadata(logical, prefs, "detailsAnmerkungen", dm.getDetails().getAnmerkungen());
+                addMetadata(logical, prefs, "detailsAuffaelligkeiten", dm.getDetails().getAuffaelligkeiten());
+                addMetadata(logical, prefs, "detailsDarlehensNehmer", dm.getDetails().getDarlehensNehmer());
+                addMetadata(logical, prefs, "detailsDarlehensSchuld", dm.getDetails().getDarlehensSchuld());
+                addMetadata(logical, prefs, "detailsRueckzahlung", dm.getDetails().getRueckzahlung());
+                addMetadata(logical, prefs, "detailsBksAnmerkung", dm.getDetails().getBksAnmerkung());
+            }
+
+            // add the first delivery
+            addDelivery(folder, dm, prefs, dd);
 
             // create the process
             BeanHelper bh = new BeanHelper();
@@ -263,6 +273,40 @@ public class BkaWohnbauQuartzPlugin extends AbstractGoobiJob {
         }
     }
 
+    private void addDelivery(Path folder, DeliveryMetadata dm, Prefs prefs, DigitalDocument dd)
+            throws TypeNotAllowedForParentException, MetadataTypeNotAllowedException, IOException, TypeNotAllowedAsChildException {
+        // add the current delivery with basic metadata
+        DocStruct bkaDelivery = dd
+                .createDocStruct(prefs.getDocStrctTypeByName(getMapping("deliveryType")));
+        addMetadata(bkaDelivery, prefs, "deliveryNumber", dm.getDeliveryNumber());
+        addMetadata(bkaDelivery, prefs, "deliveryDate", dm.getDeliveryDate());
+        dd.getLogicalDocStruct().addChild(bkaDelivery);
+
+        // add one document per provided pdf file and add metadata
+        for (BkaFile bf : dm.getFiles()) {
+            DocStruct bkaDocument = dd
+                    .createDocStruct(prefs.getDocStrctTypeByName(getMapping("documentType")));
+            addMetadata(bkaDocument, prefs, "scanId", String.valueOf(bf.getScanId()));
+            addMetadata(bkaDocument, prefs, "fuehrendAkt", bf.getFuehrendAkt());
+            addMetadata(bkaDocument, prefs, "dokumentArt", bf.getDokumentArt());
+            addMetadata(bkaDocument, prefs, "ordnungszahl", bf.getOrdnungszahl());
+            addMetadata(bkaDocument, prefs, "ordnungszahlMappe", bf.getOrdnungszahlMappe());
+            addMetadata(bkaDocument, prefs, "filename", bf.getFilename());
+            addMetadata(bkaDocument, prefs, "foldername", bf.getFoldername());
+            addMetadata(bkaDocument, prefs, "filesize", String.valueOf(bf.getFilesize()));
+            addMetadata(bkaDocument, prefs, "md5", bf.getMd5());
+            addMetadata(bkaDocument, prefs, "mimetype", bf.getMimetype());
+            bkaDelivery.addChild(bkaDocument);
+        }
+
+        // extract pdf files and create one document per PDF-file
+        List<File> pdfFiles = StorageProvider.getInstance()
+                .listFiles(folder.toString(), (path) -> path.toString().matches(".*.(pdf|PDF)"))
+                .stream()
+                .map(Path::toFile)
+                .collect(Collectors.toList());
+    }
+
     /**
      * add metadata to given docstruct element
      *
@@ -276,7 +320,8 @@ public class BkaWohnbauQuartzPlugin extends AbstractGoobiJob {
     private void addMetadata(DocStruct ds, Prefs prefs, String name, String value)
             throws MetadataTypeNotAllowedException, DocStructHasNoTypeException {
         if (StringUtils.isNotBlank(value)) {
-            Metadata id = new Metadata(prefs.getMetadataTypeByName(name));
+            String field = getMapping(name);
+            Metadata id = new Metadata(prefs.getMetadataTypeByName(field));
             id.setValue(value);
             ds.addMetadata(id);
         }
@@ -320,12 +365,13 @@ public class BkaWohnbauQuartzPlugin extends AbstractGoobiJob {
             col.setSource(cc.getString("./source", "my source"));
             col.setProject(cc.getString("./project", "my project"));
             col.setTemplate(cc.getString("./template", "my template"));
-            col.setPublicationType(cc.getString("./publicationType", "my publicationType"));
-            col.setDeliveryType(cc.getString("./deliveryType", "my deliveryType"));
-            col.setDocumentType(cc.getString("./documentType", "my documentType"));
             collections.add(col);
         }
         return collections;
+    }
+
+    public String getMapping(String name) {
+        return config.getString("./mapping/" + name);
     }
 
     public static final DirectoryStream.Filter<Path> wohnbauPdfFilter = path -> {

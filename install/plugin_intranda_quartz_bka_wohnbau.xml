@@ -87,9 +87,6 @@
 		<source>/opt/digiverso/import/BKA/Wohnbau/BWSF/</source>
 		<project>Archive_Project</project>
 		<template>Sample_Workflow</template>
-		<publicationType>BkaFile</publicationType>
-		<deliveryType>BkaDelivery</deliveryType>
-		<documentType>BkaDocument</documentType>
 	</collection>
 
 	<collection>
@@ -97,9 +94,58 @@
 		<source>/opt/digiverso/import/BKA/Wohnbau/WWF/</source>
 		<project>Manuscript_Project</project>
 		<template>Sample_Workflow</template>
-		<publicationType>BkaFile</publicationType>
-		<deliveryType>BkaDelivery</deliveryType>
-		<documentType>BkaDocument</documentType>
 	</collection>
+	
+	<mapping>
+	
+		<!-- per record -->
+		<recordType>BkaFile</recordType>
+		<identifier>CatalogIDDigital</identifier>
+		<collection>singleDigCollection</collection>
+		<fondname>BkaFondname</fondname>
+	    <bundesland>BkaBundesland</bundesland>
+	    <geschaeftszahl>BkaGeschaeftszahl</geschaeftszahl>
+	    <bezugszahlen>BkaBezugszahlen</bezugszahlen>
+	    <anmerkungRecord>BkaAnmerkung</anmerkungRecord>
+	    <grundbuchKg>BkaGrundbuchKg</grundbuchKg>
+	    <grundbuchEz>BkaGrundbuchEz</grundbuchEz>
+	    <adresseGemeindKZ>BkaAdresseGemeindKZ</adresseGemeindKZ>
+	    <adresseGemeindename>BkaAdresseGemeindeName</adresseGemeindename>
+	    <adresseEz>BkaAdresseEz</adresseEz>
+	    <adresseOrt>BkaAdresseOrt</adresseOrt>
+	    <adressePlz>BkaAdressePlz</adressePlz>
+	    <adresseHauptAdresse>BkaAdresseHauptadresse</adresseHauptAdresse>
+	    <adresseIdentAdressen>BkaAdresseIdentAdressen</adresseIdentAdressen>
+	    <adresseStrasse>BkaAdresseStrasse</adresseStrasse>
+	    <adresseTuer>BkaAdresseTuer</adresseTuer>
+	    <adresseStiege>BkaAdresseStiege</adresseStiege>
+	    <adresseHistorischeAdresse>BkaAdresseHistorischeAdresse</adresseHistorischeAdresse>
+	    <adresseAnmerkung>BkaAdresseAnmerkung</adresseAnmerkung>
+	    <detailsAnmerkungen>BkaDetailsAnmerkungen</detailsAnmerkungen>
+	    <detailsAuffaelligkeiten>BkaDetailsAuffaelligkeiten</detailsAuffaelligkeiten>
+	    <detailsDarlehensNehmer>BkaDetailsDarlehensnehmer</detailsDarlehensNehmer>
+	    <detailsDarlehensSchuld>BkaDetailsDarlehensschuld</detailsDarlehensSchuld>
+	    <detailsRueckzahlung>BkaDetailsRueckzahlung</detailsRueckzahlung>
+	    <detailsBksAnmerkung>BkaDetailsBksAnmerkung</detailsBksAnmerkung>
+    		
+		<!-- per delivery -->
+		<deliveryType>BkaDelivery</deliveryType>
+		<deliveryNumber>BkaDeliveryNumber</deliveryNumber>
+	    <deliveryDate>BkaDeliveryDate</deliveryDate>    
+		    
+		<!-- per document -->
+		<documentType>BkaDocument</documentType>
+		<scanId>BkaFileScanId</scanId>
+	    <fuehrendAkt>BkaFileFuehrendAkt</fuehrendAkt>
+	    <dokumentArt>BkaFileDokumentArt</dokumentArt>
+	    <ordnungszahl>BkaFileOrdnungszahl</ordnungszahl>
+	    <ordnungszahlMappe>BkaFileOrdnungszahlMappe</ordnungszahlMappe>
+	    <filename>BkaFileFilename</filename>
+	    <foldername>BkaFileFoldername</foldername>
+	    <filesize>BkaFileFilesize</filesize>
+	    <md5>BkaFileMd5</md5>
+	    <mimetype>BkaFileMimetype</mimetype>
+	
+	</mapping>
 	
 </config>
