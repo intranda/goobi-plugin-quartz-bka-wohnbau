@@ -3,9 +3,12 @@ package io.goobi.api.job;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.DirectoryStream;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.attribute.FileTime;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
@@ -156,7 +159,8 @@ public class BkaWohnbauQuartzPlugin extends AbstractGoobiJob {
             if (jsonfiles.size() == 0) {
                 throw new IOException("No JSON file found in folder " + folder + "to import.");
             }
-            DeliveryMetadata dm = om.readValue(jsonfiles.get(0).toFile(), DeliveryMetadata.class);
+            Path jsonFile = jsonfiles.get(0);
+            DeliveryMetadata dm = om.readValue(jsonFile.toFile(), DeliveryMetadata.class);
 
             // create a new process
             Process workflow = ProcessManager.getProcessByExactTitle(collection.getTemplate());
@@ -182,19 +186,20 @@ public class BkaWohnbauQuartzPlugin extends AbstractGoobiJob {
             addMetadata(logical, prefs, "CatalogIDDigital", identifier);
             addMetadata(logical, prefs, "singleDigCollection", collection.getName());
             addMetadata(logical, prefs, "BkaGeschaeftszahl", dm.getGeschaeftszahl());
-            addMetadata(logical, prefs, "BkaGrundbuchKg", dm.getGrundbuch().getKg());
+            if (dm.getGrundbuch() != null) {
+                addMetadata(logical, prefs, "BkaGrundbuchKg", dm.getGrundbuch().getKg());
+            }
 
             log.debug("==========================================");
             log.debug(dm.getGeschaeftszahl());
             log.debug(dm.getFondname());
-            log.debug(dm.getGrundbuch().getKg());
-            log.debug(dm.getGrundbuch().getEz());
-            log.debug(dm.getAdresse().getOrt());
-            log.debug(dm.getAdresse().getPlz());
 
+            // add the current delivery
             DocStruct bkaDelivery = dd
                     .createDocStruct(prefs.getDocStrctTypeByName(collection.getDeliveryType()));
-            addMetadata(bkaDelivery, prefs, "singleDigCollection", collection.getName());
+            addMetadata(bkaDelivery, prefs, "BkaDeliveryNumber", deliveryNumber);
+            addMetadata(bkaDelivery, prefs, "BkaDeliveryDate", getCreationTime(jsonFile));
+            logical.addChild(bkaDelivery);
 
             for (BkaFile f : dm.getFiles()) {
                 log.debug("-------------------------------------------");
@@ -202,10 +207,13 @@ public class BkaWohnbauQuartzPlugin extends AbstractGoobiJob {
                 log.debug(f.getFilename());
                 DocStruct bkaDocument = dd
                         .createDocStruct(prefs.getDocStrctTypeByName(collection.getDocumentType()));
-
+                addMetadata(bkaDocument, prefs, "BkaFileFilename", f.getFilename());
+                addMetadata(bkaDocument, prefs, "BkaFileDokumentArt", f.getDokumentArt());
+                bkaDelivery.addChild(bkaDocument);
             }
             log.debug("==========================================");
 
+            // extract pdf files and create one document per PDF-file
             List<File> pdfFiles = StorageProvider.getInstance()
                     .listFiles(folder.toString(), (path) -> path.toString().matches(".*.(pdf|PDF)"))
                     .stream()
@@ -267,9 +275,11 @@ public class BkaWohnbauQuartzPlugin extends AbstractGoobiJob {
      */
     private void addMetadata(DocStruct ds, Prefs prefs, String name, String value)
             throws MetadataTypeNotAllowedException, DocStructHasNoTypeException {
-        Metadata id = new Metadata(prefs.getMetadataTypeByName(name));
-        id.setValue(value);
-        ds.addMetadata(id);
+        if (StringUtils.isNotBlank(value)) {
+            Metadata id = new Metadata(prefs.getMetadataTypeByName(name));
+            id.setValue(value);
+            ds.addMetadata(id);
+        }
     }
 
     /**
@@ -329,6 +339,15 @@ public class BkaWohnbauQuartzPlugin extends AbstractGoobiJob {
         boolean isAllowed = name.toLowerCase().endsWith(".json");
         return isAllowed;
     };
+
+    public static String getCreationTime(Path path) throws IOException {
+        FileTime fileTime = (FileTime) Files.getAttribute(path, "creationTime");
+        LocalDateTime localDateTime = fileTime
+                .toInstant()
+                .atZone(ZoneId.systemDefault())
+                .toLocalDateTime();
+        return localDateTime.format(formatterDateTime);
+    }
 
     public static void main(String[] args) throws StreamReadException, DatabindException, IOException {
 
