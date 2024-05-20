@@ -1,7 +1,7 @@
 <config>
 
 	<!-- Select the command line tool which should be used to create the images. Either 'ghostscript' or 'pdftoppm'. -->
-	<imageGenerator>pdftoppm</imageGenerator>						
+	<imageGenerator>/opt/homebrew/bin/pdftoppm</imageGenerator>						
 	<!-- A parameter to add to the generator call. Repeatable -->
 	<imageGeneratorParameter>-cropbox</imageGeneratorParameter>
 	<!-- Hardcoded parameters for ghostscript are: -dUseCropBox, -SDEVICE, -r<res>, -sOutputFile, -dNOPAUSE, -dBATCH.
@@ -102,6 +102,7 @@
 		<recordType>BkaFile</recordType>
 		<identifier>CatalogIDDigital</identifier>
 		<collection>singleDigCollection</collection>
+		<title>TitleDocMain</title>
 		<fondname>BkaFondname</fondname>
 	    <bundesland>BkaBundesland</bundesland>
 	    <geschaeftszahl>BkaGeschaeftszahl</geschaeftszahl>
