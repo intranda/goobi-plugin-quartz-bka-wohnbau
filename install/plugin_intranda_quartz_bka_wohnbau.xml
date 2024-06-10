@@ -87,6 +87,11 @@
 		<source>/opt/digiverso/import/BKA/Wohnbau/BWSF/</source>
 		<project>Archive_Project</project>
 		<template>Sample_Workflow</template>
+		<s3endpoint>http://127.0.0.1:9001</s3endpoint>
+		<s3user>goobi</s3user>
+		<s3password>goobigoobi</s3password>
+		<s3bucket>bwsf</s3bucket>
+		<s3prefix>ST-1431_01</s3prefix>
 	</collection>
 
 	<collection>
@@ -94,6 +99,11 @@
 		<source>/opt/digiverso/import/BKA/Wohnbau/WWF/</source>
 		<project>Manuscript_Project</project>
 		<template>Sample_Workflow</template>
+		<s3endpoint>http://127.0.0.1:9001</s3endpoint>
+		<s3user>goobi</s3user>
+		<s3password>goobigoobi</s3password>
+		<s3bucket>wwf</s3bucket>
+		<s3prefix>ST-1431_01</s3prefix>
 	</collection>
 	
 	<mapping>

@@ -2,6 +2,7 @@ package io.goobi.api.job;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -49,6 +50,7 @@ import de.sub.goobi.persistence.managers.ProjectManager;
 import de.sub.goobi.persistence.managers.PropertyManager;
 import io.goobi.api.job.jsonmodel.BkaFile;
 import io.goobi.api.job.jsonmodel.DeliveryMetadata;
+import io.goobi.extension.S3ClientHelper;
 import lombok.extern.log4j.Log4j2;
 import ugh.dl.ContentFile;
 import ugh.dl.DigitalDocument;
@@ -492,7 +494,7 @@ public class BkaWohnbauQuartzPlugin extends AbstractGoobiJob {
     /**
      * Parse the configuration file
      */
-    private List<BkaWohnbauCollection> parseConfiguration() {
+    public List<BkaWohnbauCollection> parseConfiguration() {
         config = ConfigPlugins.getPluginConfig(getJobName());
         config.setExpressionEngine(new XPathExpressionEngine());
         config.setReloadingStrategy(new FileChangedReloadingStrategy());
@@ -528,6 +530,21 @@ public class BkaWohnbauQuartzPlugin extends AbstractGoobiJob {
                 .atZone(ZoneId.systemDefault())
                 .toLocalDateTime();
         return localDateTime.format(formatterDateTime);
+    }
+
+    public static void main(String[] args) throws URISyntaxException, Exception {
+        String endpoint = "http://127.0.0.1:9000";
+        String username = "admin";
+        String password = "password";
+        String bucketName = "bwsf";
+        String prefix = "ST-1431_01/";
+        // list content
+        try (S3ClientHelper hlp = new S3ClientHelper(endpoint, username, password)) {
+            List<String> content = hlp.getContentList(bucketName, prefix);
+            for (String c : content) {
+                System.out.println(c);
+            }
+        }
     }
 
 }
