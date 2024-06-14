@@ -40,7 +40,7 @@ public class BkaWohnbauCollectionTest {
     @Test
     public void testDeserialization() throws JsonMappingException, JsonProcessingException {
         String json =
-                "{ \"name\": \"Wohnbau Project\", \"source\": \"Source A\", \"project\": \"Project 1\", \"template\": \"Template X\", \"s3endpoint\": \"https://s3.example.com\", \"s3user\": \"user123\", \"s3password\": \"password123\", \"s3bucket\": \"bucket123\", \"s3prefix\": \"prefix123\" }";
+                "{ \"name\": \"Wohnbau Project\", \"project\": \"Project 1\", \"template\": \"Template X\", \"s3endpoint\": \"https://s3.example.com\", \"s3user\": \"user123\", \"s3password\": \"password123\", \"s3bucket\": \"bucket123\", \"s3prefix\": \"prefix123\" }";
 
         BkaWohnbauCollection collection = objectMapper.readValue(json, BkaWohnbauCollection.class);
 
