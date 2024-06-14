@@ -50,6 +50,7 @@ import de.sub.goobi.persistence.managers.PropertyManager;
 import io.goobi.api.job.jsonmodel.BkaFile;
 import io.goobi.api.job.jsonmodel.DeliveryMetadata;
 import io.goobi.extension.S3ClientHelper;
+import lombok.Setter;
 import lombok.extern.log4j.Log4j2;
 import ugh.dl.ContentFile;
 import ugh.dl.DigitalDocument;
@@ -70,6 +71,7 @@ public class BkaWohnbauQuartzPlugin extends AbstractGoobiJob {
     private static final DateTimeFormatter formatterDateTime = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm:ss");
     private static final String PROPERTY = "DeliveryHistory";
     private ObjectMapper om = new ObjectMapper();
+    @Setter
     private XMLConfiguration config;
 
     /**
@@ -96,7 +98,7 @@ public class BkaWohnbauQuartzPlugin extends AbstractGoobiJob {
      * @param source
      * @throws Exception
      */
-    private void analyseContent(BkaWohnbauCollection collection) throws Exception {
+    public void analyseContent(BkaWohnbauCollection collection) throws Exception {
         log.debug("Analysing content for: " + collection.getProject() + " from " + collection.getSource());
 
         // list content
@@ -565,7 +567,7 @@ public class BkaWohnbauQuartzPlugin extends AbstractGoobiJob {
      * @return
      * @throws IOException
      */
-    private static String getCreationTime(Path path) throws IOException {
+    public static String getCreationTime(Path path) throws IOException {
         FileTime fileTime = (FileTime) Files.getAttribute(path, "creationTime");
         LocalDateTime localDateTime = fileTime
                 .toInstant()

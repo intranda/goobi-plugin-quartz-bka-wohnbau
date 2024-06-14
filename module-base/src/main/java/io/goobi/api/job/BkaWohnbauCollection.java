@@ -1,8 +1,10 @@
 package io.goobi.api.job;
 
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
-@Data
+@Getter
+@Setter
 public class BkaWohnbauCollection {
     private String name;
     private String source;

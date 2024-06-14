@@ -2,9 +2,11 @@ package io.goobi.api.job.jsonmodel;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
-@Data
+@Getter
+@Setter
 public class Adresse {
 
     @JsonProperty("gemeindKZ")

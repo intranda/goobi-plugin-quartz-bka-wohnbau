@@ -3,9 +3,11 @@ package io.goobi.api.job.jsonmodel;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonRootName;
 
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
-@Data
+@Getter
+@Setter
 @JsonRootName(value = "File")
 public class BkaFile {
 

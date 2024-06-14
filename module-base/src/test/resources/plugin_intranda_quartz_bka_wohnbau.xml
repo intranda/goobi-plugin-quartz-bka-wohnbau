@@ -1,4 +1,163 @@
 <config>
-    <!-- sample parameter -->
-        <value>test</value>
+
+	<!-- content to import, can exist multiple times -->
+	<collection>
+		<name>BWSF</name>
+		<source>/opt/digiverso/import/BKA/Wohnbau/BWSF/</source>
+		<project>Archive_Project</project>
+		<template>Sample_Workflow</template>
+		<s3endpoint>http://127.0.0.1:9000</s3endpoint>
+		<s3user>goobi</s3user>
+		<s3password>goobigoobi</s3password>
+		<s3bucket>bwsf</s3bucket>
+		<s3prefix></s3prefix>
+	</collection>
+
+	<collection>
+		<name>WWF</name>
+		<source>/opt/digiverso/import/BKA/Wohnbau/WWF/</source>
+		<project>Manuscript_Project</project>
+		<template>Sample_Workflow</template>
+		<s3endpoint>http://127.0.0.1:9000</s3endpoint>
+		<s3user>goobi</s3user>
+		<s3password>goobigoobi</s3password>
+		<s3bucket>wwf</s3bucket>
+		<s3prefix></s3prefix>
+	</collection>
+	
+	<mapping>
+	
+		<!-- per record -->
+		<recordType>BkaFile</recordType>
+		<identifier>CatalogIDDigital</identifier>
+		<collection>singleDigCollection</collection>
+		<title>TitleDocMain</title>
+		<fondname>BkaFondname</fondname>
+	    <bundesland>BkaBundesland</bundesland>
+	    <geschaeftszahl>BkaGeschaeftszahl</geschaeftszahl>
+	    <bezugszahlen>BkaBezugszahlen</bezugszahlen>
+	    <anmerkungRecord>BkaAnmerkung</anmerkungRecord>
+	    <grundbuchKg>BkaGrundbuchKg</grundbuchKg>
+	    <grundbuchEz>BkaGrundbuchEz</grundbuchEz>
+	    <adresseGemeindKZ>BkaAdresseGemeindKZ</adresseGemeindKZ>
+	    <adresseGemeindename>BkaAdresseGemeindeName</adresseGemeindename>
+	    <adresseEz>BkaAdresseEz</adresseEz>
+	    <adresseOrt>BkaAdresseOrt</adresseOrt>
+	    <adressePlz>BkaAdressePlz</adressePlz>
+	    <adresseHauptAdresse>BkaAdresseHauptadresse</adresseHauptAdresse>
+	    <adresseIdentAdressen>BkaAdresseIdentAdressen</adresseIdentAdressen>
+	    <adresseStrasse>BkaAdresseStrasse</adresseStrasse>
+	    <adresseTuer>BkaAdresseTuer</adresseTuer>
+	    <adresseStiege>BkaAdresseStiege</adresseStiege>
+	    <adresseHistorischeAdresse>BkaAdresseHistorischeAdresse</adresseHistorischeAdresse>
+	    <adresseAnmerkung>BkaAdresseAnmerkung</adresseAnmerkung>
+	    <detailsAnmerkungen>BkaDetailsAnmerkungen</detailsAnmerkungen>
+	    <detailsAuffaelligkeiten>BkaDetailsAuffaelligkeiten</detailsAuffaelligkeiten>
+	    <detailsDarlehensNehmer>BkaDetailsDarlehensnehmer</detailsDarlehensNehmer>
+	    <detailsDarlehensSchuld>BkaDetailsDarlehensschuld</detailsDarlehensSchuld>
+	    <detailsRueckzahlung>BkaDetailsRueckzahlung</detailsRueckzahlung>
+	    <detailsBksAnmerkung>BkaDetailsBksAnmerkung</detailsBksAnmerkung>
+    		
+		<!-- per delivery -->
+		<deliveryType>BkaDelivery</deliveryType>
+		<deliveryNumber>BkaDeliveryNumber</deliveryNumber>
+	    <deliveryDate>BkaDeliveryDate</deliveryDate>    
+		    
+		<!-- per document -->
+		<documentType>BkaDocument</documentType>
+		<scanId>BkaFileScanId</scanId>
+	    <fuehrendAkt>BkaFileFuehrendAkt</fuehrendAkt>
+	    <dokumentArt>BkaFileDokumentArt</dokumentArt>
+	    <ordnungszahl>BkaFileOrdnungszahl</ordnungszahl>
+	    <ordnungszahlMappe>BkaFileOrdnungszahlMappe</ordnungszahlMappe>
+	    <filename>BkaFileFilename</filename>
+	    <foldername>BkaFileFoldername</foldername>
+	    <filesize>BkaFileFilesize</filesize>
+	    <md5>BkaFileMd5</md5>
+	    <mimetype>BkaFileMimetype</mimetype>
+	
+	</mapping>
+	
+	<!-- Select the command line tool which should be used to create the images. Either 'ghostscript' or 'pdftoppm'. -->
+	<imageGenerator>/opt/homebrew/bin/pdftoppm</imageGenerator>						
+	<!-- A parameter to add to the generator call. Repeatable -->
+	<imageGeneratorParameter>-cropbox</imageGeneratorParameter>
+	<!-- Hardcoded parameters for ghostscript are: -dUseCropBox, -SDEVICE, -r<res>, -sOutputFile, -dNOPAUSE, -dBATCH.
+	     Useful parameters for configuration are:
+	     ===================================================
+	     -q                         `quiet`, fewer messages
+	     ...................................................
+	     -g<width>x<height>          page size in pixels 
+	     ===================================================
+	-->
+	<!-- Hardcoded parameters for pdftoppm are: -{format}, -r.
+	     Useful parameters for configuration are:
+	     ======================================================================================================
+	     -f <int>                           first page to print
+	     ......................................................................................................
+	     -l <int>                           last page to print
+	     ......................................................................................................
+	     -o                                 print only odd pages
+	     ......................................................................................................
+	     -e                                 print only even pages
+	     ......................................................................................................
+	     -singlefile                        write only the first page and do not add digits
+	     ......................................................................................................
+	     -scale-dimension-before-rotation   for rotated pdf, resize dimensions before the rotation
+	     ......................................................................................................
+	     -rx <fp>                           X resolution, in DPI
+	     ......................................................................................................
+	     -ry <fp>                           Y resolution, in DPI
+	     ......................................................................................................
+	     -scale-to <int>                    scales each page to fit within scale-to*scale-to pixel box
+	     ......................................................................................................
+	     -scale-to-x <int>                  scales each page horizontally to fit in scale-to-x pixels
+	     ......................................................................................................
+	     -scale-to-y <int>                  scales each page vertically to fit in scale-to-y pixels
+	     ......................................................................................................
+	     -x <int>                           x-coordinate of the crop area top left corner
+	     ......................................................................................................
+	     -y <int>                           y-coordinate of the crop area top left corner
+	     ......................................................................................................
+	     -W <int>                           width of crop area in pixels (DEFAULT 0)
+	     ......................................................................................................
+	     -H <int>                           height of crop area in pixels (DEFAULT 0)
+	     ......................................................................................................
+	     -sz <int>                          size of crop square in pixels (sets W and H)
+	     ......................................................................................................
+	     -cropbox                           use the crop box rather than media box
+	     ......................................................................................................
+	     -hide-annotations                  do not show annotations
+	     ......................................................................................................
+	     -mono                              generate a monochrome PBM file
+	     ......................................................................................................
+	     -gray                              generate a grayscale PGM file
+	     ......................................................................................................
+	     -sep <string>                      single character separator between name and page number (DEFAULT -)
+	     ......................................................................................................
+	     -forcenum                          force page number even if there is only one page
+	     ......................................................................................................
+	     -overprint                         enable overprint
+	     ......................................................................................................
+	     -freetype <string>                 enable FreeType font rasterizer: yes, no
+	     ......................................................................................................
+	     -thinlinemode <string>             set thin line mode: none, solid, shape. DEFAULT none.
+	     ......................................................................................................
+	     -aa <string>                       enable font anti-aliasing: yes, no
+	     ......................................................................................................
+	     -aaVector <string>                 enable vector anti-aliasing: yes, no
+	     ......................................................................................................
+	     -opw <string>                      owner password (for encrypted files)
+	     ......................................................................................................
+	     -upw <string>                      user password (for encrypted files)
+	     ......................................................................................................
+	     -q                                 don't print any messages or errors
+	     ......................................................................................................
+	     -progress                          print progress info
+	     ......................................................................................................
+	     -tiffcompression <string>          set TIFF compression: none, packbits, jpeg, lzw, deflate
+	     ======================================================================================================
+	-->
+	
+	
 </config>
