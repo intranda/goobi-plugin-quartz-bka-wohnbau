@@ -1,5 +1,83 @@
 <config>
 
+	<!-- content to import, can exist multiple times -->
+	<collection>
+		<name>BWSF</name>
+		<source>/opt/digiverso/import/BKA/Wohnbau/BWSF/</source>
+		<project>Archive_Project</project>
+		<template>Sample_Workflow</template>
+		<s3endpoint>http://127.0.0.1:9000</s3endpoint>
+		<s3user>goobi</s3user>
+		<s3password>goobigoobi</s3password>
+		<s3bucket>bwsf</s3bucket>
+		<s3prefix></s3prefix>
+	</collection>
+
+	<collection>
+		<name>WWF</name>
+		<source>/opt/digiverso/import/BKA/Wohnbau/WWF/</source>
+		<project>Manuscript_Project</project>
+		<template>Sample_Workflow</template>
+		<s3endpoint>http://127.0.0.1:9000</s3endpoint>
+		<s3user>goobi</s3user>
+		<s3password>goobigoobi</s3password>
+		<s3bucket>wwf</s3bucket>
+		<s3prefix></s3prefix>
+	</collection>
+	
+	<mapping>
+	
+		<!-- per record -->
+		<recordType>BkaFile</recordType>
+		<identifier>CatalogIDDigital</identifier>
+		<collection>singleDigCollection</collection>
+		<title>TitleDocMain</title>
+		<fondname>BkaFondname</fondname>
+	    <bundesland>BkaBundesland</bundesland>
+	    <geschaeftszahl>BkaGeschaeftszahl</geschaeftszahl>
+	    <bezugszahlen>BkaBezugszahlen</bezugszahlen>
+	    <anmerkungRecord>BkaAnmerkung</anmerkungRecord>
+	    <grundbuchKg>BkaGrundbuchKg</grundbuchKg>
+	    <grundbuchEz>BkaGrundbuchEz</grundbuchEz>
+	    <adresseGemeindKZ>BkaAdresseGemeindKZ</adresseGemeindKZ>
+	    <adresseGemeindename>BkaAdresseGemeindeName</adresseGemeindename>
+	    <adresseEz>BkaAdresseEz</adresseEz>
+	    <adresseOrt>BkaAdresseOrt</adresseOrt>
+	    <adressePlz>BkaAdressePlz</adressePlz>
+	    <adresseHauptAdresse>BkaAdresseHauptadresse</adresseHauptAdresse>
+	    <adresseIdentAdressen>BkaAdresseIdentAdressen</adresseIdentAdressen>
+	    <adresseStrasse>BkaAdresseStrasse</adresseStrasse>
+	    <adresseTuer>BkaAdresseTuer</adresseTuer>
+	    <adresseStiege>BkaAdresseStiege</adresseStiege>
+	    <adresseHistorischeAdresse>BkaAdresseHistorischeAdresse</adresseHistorischeAdresse>
+	    <adresseAnmerkung>BkaAdresseAnmerkung</adresseAnmerkung>
+	    <detailsAnmerkungen>BkaDetailsAnmerkungen</detailsAnmerkungen>
+	    <detailsAuffaelligkeiten>BkaDetailsAuffaelligkeiten</detailsAuffaelligkeiten>
+	    <detailsDarlehensNehmer>BkaDetailsDarlehensnehmer</detailsDarlehensNehmer>
+	    <detailsDarlehensSchuld>BkaDetailsDarlehensschuld</detailsDarlehensSchuld>
+	    <detailsRueckzahlung>BkaDetailsRueckzahlung</detailsRueckzahlung>
+	    <detailsBksAnmerkung>BkaDetailsBksAnmerkung</detailsBksAnmerkung>
+    		
+		<!-- per delivery -->
+		<deliveryType>BkaDelivery</deliveryType>
+		<deliveryNumber>BkaDeliveryNumber</deliveryNumber>
+	    <deliveryDate>BkaDeliveryDate</deliveryDate>    
+		    
+		<!-- per document -->
+		<documentType>BkaDocument</documentType>
+		<scanId>BkaFileScanId</scanId>
+	    <fuehrendAkt>BkaFileFuehrendAkt</fuehrendAkt>
+	    <dokumentArt>BkaFileDokumentArt</dokumentArt>
+	    <ordnungszahl>BkaFileOrdnungszahl</ordnungszahl>
+	    <ordnungszahlMappe>BkaFileOrdnungszahlMappe</ordnungszahlMappe>
+	    <filename>BkaFileFilename</filename>
+	    <foldername>BkaFileFoldername</foldername>
+	    <filesize>BkaFileFilesize</filesize>
+	    <md5>BkaFileMd5</md5>
+	    <mimetype>BkaFileMimetype</mimetype>
+	
+	</mapping>
+	
 	<!-- Select the command line tool which should be used to create the images. Either 'ghostscript' or 'pdftoppm'. -->
 	<imageGenerator>/opt/homebrew/bin/pdftoppm</imageGenerator>						
 	<!-- A parameter to add to the generator call. Repeatable -->
@@ -80,83 +158,6 @@
 	     -tiffcompression <string>          set TIFF compression: none, packbits, jpeg, lzw, deflate
 	     ======================================================================================================
 	-->
-
-	<!-- content to import, can exist multiple times -->
-	<collection>
-		<name>BWSF</name>
-		<source>/opt/digiverso/import/BKA/Wohnbau/BWSF/</source>
-		<project>Archive_Project</project>
-		<template>Sample_Workflow</template>
-		<s3endpoint>http://127.0.0.1:9001</s3endpoint>
-		<s3user>goobi</s3user>
-		<s3password>goobigoobi</s3password>
-		<s3bucket>bwsf</s3bucket>
-		<s3prefix>ST-1431_01</s3prefix>
-	</collection>
-
-	<collection>
-		<name>WWF</name>
-		<source>/opt/digiverso/import/BKA/Wohnbau/WWF/</source>
-		<project>Manuscript_Project</project>
-		<template>Sample_Workflow</template>
-		<s3endpoint>http://127.0.0.1:9001</s3endpoint>
-		<s3user>goobi</s3user>
-		<s3password>goobigoobi</s3password>
-		<s3bucket>wwf</s3bucket>
-		<s3prefix>ST-1431_01</s3prefix>
-	</collection>
 	
-	<mapping>
-	
-		<!-- per record -->
-		<recordType>BkaFile</recordType>
-		<identifier>CatalogIDDigital</identifier>
-		<collection>singleDigCollection</collection>
-		<title>TitleDocMain</title>
-		<fondname>BkaFondname</fondname>
-	    <bundesland>BkaBundesland</bundesland>
-	    <geschaeftszahl>BkaGeschaeftszahl</geschaeftszahl>
-	    <bezugszahlen>BkaBezugszahlen</bezugszahlen>
-	    <anmerkungRecord>BkaAnmerkung</anmerkungRecord>
-	    <grundbuchKg>BkaGrundbuchKg</grundbuchKg>
-	    <grundbuchEz>BkaGrundbuchEz</grundbuchEz>
-	    <adresseGemeindKZ>BkaAdresseGemeindKZ</adresseGemeindKZ>
-	    <adresseGemeindename>BkaAdresseGemeindeName</adresseGemeindename>
-	    <adresseEz>BkaAdresseEz</adresseEz>
-	    <adresseOrt>BkaAdresseOrt</adresseOrt>
-	    <adressePlz>BkaAdressePlz</adressePlz>
-	    <adresseHauptAdresse>BkaAdresseHauptadresse</adresseHauptAdresse>
-	    <adresseIdentAdressen>BkaAdresseIdentAdressen</adresseIdentAdressen>
-	    <adresseStrasse>BkaAdresseStrasse</adresseStrasse>
-	    <adresseTuer>BkaAdresseTuer</adresseTuer>
-	    <adresseStiege>BkaAdresseStiege</adresseStiege>
-	    <adresseHistorischeAdresse>BkaAdresseHistorischeAdresse</adresseHistorischeAdresse>
-	    <adresseAnmerkung>BkaAdresseAnmerkung</adresseAnmerkung>
-	    <detailsAnmerkungen>BkaDetailsAnmerkungen</detailsAnmerkungen>
-	    <detailsAuffaelligkeiten>BkaDetailsAuffaelligkeiten</detailsAuffaelligkeiten>
-	    <detailsDarlehensNehmer>BkaDetailsDarlehensnehmer</detailsDarlehensNehmer>
-	    <detailsDarlehensSchuld>BkaDetailsDarlehensschuld</detailsDarlehensSchuld>
-	    <detailsRueckzahlung>BkaDetailsRueckzahlung</detailsRueckzahlung>
-	    <detailsBksAnmerkung>BkaDetailsBksAnmerkung</detailsBksAnmerkung>
-    		
-		<!-- per delivery -->
-		<deliveryType>BkaDelivery</deliveryType>
-		<deliveryNumber>BkaDeliveryNumber</deliveryNumber>
-	    <deliveryDate>BkaDeliveryDate</deliveryDate>    
-		    
-		<!-- per document -->
-		<documentType>BkaDocument</documentType>
-		<scanId>BkaFileScanId</scanId>
-	    <fuehrendAkt>BkaFileFuehrendAkt</fuehrendAkt>
-	    <dokumentArt>BkaFileDokumentArt</dokumentArt>
-	    <ordnungszahl>BkaFileOrdnungszahl</ordnungszahl>
-	    <ordnungszahlMappe>BkaFileOrdnungszahlMappe</ordnungszahlMappe>
-	    <filename>BkaFileFilename</filename>
-	    <foldername>BkaFileFoldername</foldername>
-	    <filesize>BkaFileFilesize</filesize>
-	    <md5>BkaFileMd5</md5>
-	    <mimetype>BkaFileMimetype</mimetype>
-	
-	</mapping>
 	
 </config>

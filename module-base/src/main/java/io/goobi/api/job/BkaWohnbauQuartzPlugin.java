@@ -39,7 +39,6 @@ import de.sub.goobi.config.ConfigPlugins;
 import de.sub.goobi.config.ConfigurationHelper;
 import de.sub.goobi.helper.BeanHelper;
 import de.sub.goobi.helper.Helper;
-import de.sub.goobi.helper.NIOFileUtils;
 import de.sub.goobi.helper.ScriptThreadWithoutHibernate;
 import de.sub.goobi.helper.StorageProvider;
 import de.sub.goobi.helper.enums.StepStatus;
@@ -81,7 +80,11 @@ public class BkaWohnbauQuartzPlugin extends AbstractGoobiJob {
         // initialize configuration and run through each content block to analyze
         List<BkaWohnbauCollection> collections = parseConfiguration();
         for (BkaWohnbauCollection collection : collections) {
-            analyseContent(collection);
+            try {
+                analyseContent(collection);
+            } catch (Exception e) {
+                log.error("Error while executing BkaWohnbau Plugin for collection " + collection.getName(), e);
+            }
         }
         log.debug("BkaWohnbau Plugin executed");
     }
@@ -91,32 +94,38 @@ public class BkaWohnbauQuartzPlugin extends AbstractGoobiJob {
      * 
      * @param project
      * @param source
+     * @throws Exception
      */
-    private void analyseContent(BkaWohnbauCollection collection) {
+    private void analyseContent(BkaWohnbauCollection collection) throws Exception {
         log.debug("Analysing content for: " + collection.getProject() + " from " + collection.getSource());
 
-        // run through sub-folders
-        // TODO: Adapt this to list the files from an S3 bucket
-        List<Path> folders = StorageProvider.getInstance().listFiles(collection.getSource(), NIOFileUtils.folderFilter);
-        for (Path folder : folders) {
+        // list content
+        S3ClientHelper hlp = new S3ClientHelper(collection.getS3endpoint(), collection.getS3user(), collection.getS3password());
+        List<String> content = hlp.getContentList(collection.getS3bucket(), collection.getS3prefix());
+        for (String c : content) {
+            // if the item is a folder analyse if it is new
+            if (c.endsWith("/")) {
+                String folder = c.substring(0, c.indexOf("/"));
+                // get base name (geschäftszahl) and delivery count (nachlieferung)
+                String baseName = StringUtils.substringBefore(folder, "_");
+                String deliveryNumber = StringUtils.substringAfter(folder, "_");
+                if (StringUtils.isBlank(deliveryNumber)) {
+                    deliveryNumber = "00";
+                }
+                String identifier = collection.getName() + "_" + baseName;
+                log.debug("Analysing folder " + folder + " for process " + baseName + " as delivery " + deliveryNumber);
 
-            // get base name (geschäftszahl) and delivery count (nachlieferung)
-            String baseName = StringUtils.substringBefore(folder.getFileName().toString(), "_");
-            String deliveryNumber = StringUtils.substringAfter(folder.getFileName().toString(), "_");
-            if (StringUtils.isBlank(deliveryNumber)) {
-                deliveryNumber = "00";
+                // find out if a process for this item exists already
+                List<Process> processes = findProcesses(baseName);
+                if (processes.size() == 0) {
+                    createNewProcess(collection, identifier, c, deliveryNumber);
+                } else {
+                    updateExistingProcess(collection, identifier, c, deliveryNumber, processes.get(0));
+                }
             }
-            String identifier = collection.getName() + "_" + baseName;
-            log.debug("Analysing folder " + folder + " for process " + baseName + " as delivery " + deliveryNumber);
 
-            // find out if a process for this item exists already
-            List<Process> processes = findProcesses(baseName);
-            if (processes.size() == 0) {
-                createNewProcess(collection, identifier, folder, deliveryNumber);
-            } else {
-                updateExistingProcess(collection, identifier, folder, deliveryNumber, processes.get(0));
-            }
         }
+        hlp.close();
     }
 
     /**
@@ -128,7 +137,7 @@ public class BkaWohnbauQuartzPlugin extends AbstractGoobiJob {
      * @param deliveryNumber
      * @param process
      */
-    private void updateExistingProcess(BkaWohnbauCollection collection, String identifier, Path s3folder, String deliveryNumber, Process process) {
+    private void updateExistingProcess(BkaWohnbauCollection collection, String identifier, String s3folder, String deliveryNumber, Process process) {
         try {
 
             // read existing json-Property
@@ -147,8 +156,10 @@ public class BkaWohnbauQuartzPlugin extends AbstractGoobiJob {
                     }
 
                     // if this delivery is new download the full folder of json, pdf and fulltext files
-                    // TODO: Implement the download of all files into a temporary folder here
-                    Path folder = s3folder;
+                    S3ClientHelper hlp = new S3ClientHelper(collection.getS3endpoint(), collection.getS3user(), collection.getS3password());
+                    Path folder = Paths.get(ConfigurationHelper.getInstance().getTemporaryFolder(), identifier + "_" + deliveryNumber);
+                    hlp.downloadAllFiles(collection.getS3bucket(), collection.getS3prefix() + s3folder, folder);
+                    hlp.close();
 
                     // first try to read the json file
                     List<Path> jsonfiles = StorageProvider.getInstance().listFiles(folder.toString(), wohnbauJsonFilter);
@@ -182,6 +193,8 @@ public class BkaWohnbauQuartzPlugin extends AbstractGoobiJob {
                     pp.setWert(historyJson);
                     PropertyManager.saveProcessProperty(pp);
 
+                    // delete temporary copied data
+                    StorageProvider.getInstance().deleteDir(folder);
                     Helper.addMessageToProcessJournal(process.getId(), LogType.DEBUG,
                             "Process was updated using the quartz-wohnbau-plugin successfully");
 
@@ -201,12 +214,14 @@ public class BkaWohnbauQuartzPlugin extends AbstractGoobiJob {
      * @param project
      * @param source
      */
-    private void createNewProcess(BkaWohnbauCollection collection, String identifier, Path s3folder, String deliveryNumber) {
+    private void createNewProcess(BkaWohnbauCollection collection, String identifier, String s3folder, String deliveryNumber) {
         try {
 
             // Download the full folder of json, pdf and fulltext files
-            // TODO: Implement the download of all files into a temporary folder here
-            Path folder = s3folder;
+            S3ClientHelper hlp = new S3ClientHelper(collection.getS3endpoint(), collection.getS3user(), collection.getS3password());
+            Path folder = Paths.get(ConfigurationHelper.getInstance().getTemporaryFolder(), identifier + "_" + deliveryNumber);
+            hlp.downloadAllFiles(collection.getS3bucket(), collection.getS3prefix() + s3folder, folder);
+            hlp.close();
 
             // first try to read the json file
             List<Path> jsonfiles = StorageProvider.getInstance().listFiles(folder.toString(), wohnbauJsonFilter);
@@ -314,6 +329,9 @@ public class BkaWohnbauQuartzPlugin extends AbstractGoobiJob {
             // update process
             ProcessManager.saveProcess(process);
             Helper.addMessageToProcessJournal(process.getId(), LogType.DEBUG, "Process was created using the quartz-wohnbau-plugin successfully");
+
+            // delete temporary copied data
+            StorageProvider.getInstance().deleteDir(folder);
 
             // start any open automatic tasks for the created process
             for (Step s : process.getSchritteList()) {
@@ -486,6 +504,9 @@ public class BkaWohnbauQuartzPlugin extends AbstractGoobiJob {
         return processes;
     }
 
+    /**
+     * return the name of the current plugin
+     */
     @Override
     public String getJobName() {
         return "intranda_quartz_bka_wohnbau";
@@ -508,21 +529,42 @@ public class BkaWohnbauQuartzPlugin extends AbstractGoobiJob {
             col.setSource(cc.getString("./source", "my source"));
             col.setProject(cc.getString("./project", "my project"));
             col.setTemplate(cc.getString("./template", "my template"));
+            col.setS3endpoint(cc.getString("./s3endpoint", "my endpoint"));
+            col.setS3user(cc.getString("./s3user", "my user"));
+            col.setS3password(cc.getString("./s3password", "my password"));
+            col.setS3bucket(cc.getString("./s3bucket", "my bucket"));
+            col.setS3prefix(cc.getString("./s3prefix"));
             collections.add(col);
         }
         return collections;
     }
 
+    /**
+     * get the expected ruleset mapping from plugin configuration
+     *
+     * @param name
+     * @return
+     */
     private String getMapping(String name) {
         return config.getString("./mapping/" + name);
     }
 
+    /**
+     * File Filter to get json files from file system
+     */
     private static final DirectoryStream.Filter<Path> wohnbauJsonFilter = path -> {
         String name = path.getFileName().toString();
         boolean isAllowed = name.toLowerCase().endsWith(".json");
         return isAllowed;
     };
 
+    /**
+     * read creation time for a file from filesystem
+     * 
+     * @param path
+     * @return
+     * @throws IOException
+     */
     private static String getCreationTime(Path path) throws IOException {
         FileTime fileTime = (FileTime) Files.getAttribute(path, "creationTime");
         LocalDateTime localDateTime = fileTime
@@ -532,19 +574,26 @@ public class BkaWohnbauQuartzPlugin extends AbstractGoobiJob {
         return localDateTime.format(formatterDateTime);
     }
 
+    /**
+     * sample call for lokal s3 tests
+     * 
+     * @param args
+     * @throws URISyntaxException
+     * @throws Exception
+     */
     public static void main(String[] args) throws URISyntaxException, Exception {
         String endpoint = "http://127.0.0.1:9000";
         String username = "admin";
         String password = "password";
         String bucketName = "bwsf";
-        String prefix = "ST-1431_01/";
+        String prefix = "";
         // list content
-        try (S3ClientHelper hlp = new S3ClientHelper(endpoint, username, password)) {
-            List<String> content = hlp.getContentList(bucketName, prefix);
-            for (String c : content) {
-                System.out.println(c);
-            }
+        S3ClientHelper hlp = new S3ClientHelper(endpoint, username, password);
+        List<String> content = hlp.getContentList(bucketName, prefix);
+        for (String c : content) {
+            System.out.println(c);
         }
+
     }
 
 }
