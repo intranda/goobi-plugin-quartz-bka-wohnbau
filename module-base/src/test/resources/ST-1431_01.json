@@ -1,0 +1,52 @@
+{
+  "fondname": "BWSF",
+  "bundesland": "ST",
+  "geschaeftszahl": "ST-1431",
+  "bezugszahlen": null,
+  "adresse": {
+    "gemeindKZ": "gemeindename",
+    "gemeindename": "gemeindename",
+    "ez": "ez",
+    "ort": "ort",
+    "plz": "plz",
+    "hauptAdresse": "hauptAdresse",
+    "identAdressen": "identAdressen",
+    "tuer": "tuer",
+    "stiege": "stiege",
+    "historischeAdresse": "historischeAdresse"
+  },
+  "details": {
+    "anmerkungen": null,
+    "auffaelligkeiten": null,
+    "darlehensNehmer": null,
+    "darlehensSchuld": null,
+    "rueckzahlung": null,
+    "bksAnmerkung": "unbekannte Geschaeftszahl"
+  },
+  "files": [
+    {
+      "scanId": 251,
+      "fuehrendAkt": null,
+      "dokumentArt": "Sonstiges Dokument",
+      "ordnungszahl": null,
+      "ordnungszahlMappe": null,
+      "filename": "ST-1431_sonstige Dokumente_062.pdf",
+      "foldername": "BWSF/ST-1431/sonstige Dokumente",
+      "filesize": 209933,
+      "md5": "11f83e037a7cdcb83ef12a1ed4ba325a",
+      "mimetype": "application/pdf"
+    },
+    {
+      "scanId": 252,
+      "fuehrendAkt": null,
+      "dokumentArt": "Ordnungszahl",
+      "ordnungszahl": "ST-1431_43",
+      "ordnungszahlMappe": null,
+      "filename": "ST-1431_43.pdf",
+      "foldername": "BWSF/ST-1431",
+      "filesize": 1063761,
+      "md5": "e8bc56cccf60aecb8c8705379932e44e",
+      "mimetype": "application/pdf"
+    }
+  ]
+}

@@ -28,7 +28,7 @@
 	<mapping>
 	
 		<!-- per record -->
-		<recordType>BkaFile</recordType>
+		<recordType>Monograph</recordType>
 		<identifier>CatalogIDDigital</identifier>
 		<collection>singleDigCollection</collection>
 		<title>TitleDocMain</title>
@@ -59,12 +59,12 @@
 	    <detailsBksAnmerkung>BkaDetailsBksAnmerkung</detailsBksAnmerkung>
     		
 		<!-- per delivery -->
-		<deliveryType>BkaDelivery</deliveryType>
+		<deliveryType>Chapter</deliveryType>
 		<deliveryNumber>BkaDeliveryNumber</deliveryNumber>
 	    <deliveryDate>BkaDeliveryDate</deliveryDate>    
 		    
 		<!-- per document -->
-		<documentType>BkaDocument</documentType>
+		<documentType>Chapter</documentType>
 		<scanId>BkaFileScanId</scanId>
 	    <fuehrendAkt>BkaFileFuehrendAkt</fuehrendAkt>
 	    <dokumentArt>BkaFileDokumentArt</dokumentArt>

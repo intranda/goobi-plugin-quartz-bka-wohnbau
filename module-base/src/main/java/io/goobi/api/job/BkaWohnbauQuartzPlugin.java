@@ -56,6 +56,7 @@ import ugh.dl.DocStruct;
 import ugh.dl.DocStructType;
 import ugh.dl.Fileformat;
 import ugh.dl.Metadata;
+import ugh.dl.MetadataType;
 import ugh.dl.Prefs;
 import ugh.exceptions.DocStructHasNoTypeException;
 import ugh.exceptions.MetadataTypeNotAllowedException;
@@ -481,9 +482,12 @@ public class BkaWohnbauQuartzPlugin extends AbstractGoobiJob {
             throws MetadataTypeNotAllowedException, DocStructHasNoTypeException {
         if (StringUtils.isNotBlank(value)) {
             String field = getMapping(name);
-            Metadata id = new Metadata(prefs.getMetadataTypeByName(field));
-            id.setValue(value);
-            ds.addMetadata(id);
+            MetadataType type = prefs.getMetadataTypeByName(field);
+            if (type != null) {
+                Metadata id = new Metadata(type);
+                id.setValue(value);
+                ds.addMetadata(id);
+            }
         }
     }
 
