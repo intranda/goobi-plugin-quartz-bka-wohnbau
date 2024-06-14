@@ -113,7 +113,6 @@ public class BkaWohnbauQuartzPluginTest {
 
         BkaWohnbauCollection collection = collections.get(0);
         assertEquals("Test Collection", collection.getName());
-        assertEquals("Test Source", collection.getSource());
         assertEquals("Test Project", collection.getProject());
         assertEquals("Test Template", collection.getTemplate());
         assertEquals("http://test-endpoint", collection.getS3endpoint());
@@ -127,7 +126,6 @@ public class BkaWohnbauQuartzPluginTest {
         List<HierarchicalConfiguration> collectionConfigs = new ArrayList<>();
         HierarchicalConfiguration config = new HierarchicalConfiguration();
         config.addProperty("name", "Test Collection");
-        config.addProperty("source", "Test Source");
         config.addProperty("project", "Test Project");
         config.addProperty("template", "Test Template");
         config.addProperty("s3endpoint", "http://test-endpoint");

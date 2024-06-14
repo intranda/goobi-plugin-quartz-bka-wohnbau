@@ -23,7 +23,6 @@ public class BkaWohnbauCollectionTest {
     public void testSerialization() throws JsonProcessingException {
         BkaWohnbauCollection collection = new BkaWohnbauCollection();
         collection.setName("Wohnbau Project");
-        collection.setSource("Source A");
         collection.setProject("Project 1");
         collection.setTemplate("Template X");
         collection.setS3endpoint("https://s3.example.com");
@@ -47,7 +46,6 @@ public class BkaWohnbauCollectionTest {
 
         assertNotNull(collection);
         assertEquals("Wohnbau Project", collection.getName());
-        assertEquals("Source A", collection.getSource());
         assertEquals("Project 1", collection.getProject());
         assertEquals("Template X", collection.getTemplate());
         assertEquals("https://s3.example.com", collection.getS3endpoint());

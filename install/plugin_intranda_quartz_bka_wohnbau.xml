@@ -3,7 +3,6 @@
 	<!-- content to import, can exist multiple times -->
 	<collection>
 		<name>BWSF</name>
-		<source>/opt/digiverso/import/BKA/Wohnbau/BWSF/</source>
 		<project>Archive_Project</project>
 		<template>Sample_Workflow</template>
 		<s3endpoint>http://127.0.0.1:9000</s3endpoint>
@@ -15,7 +14,6 @@
 
 	<collection>
 		<name>WWF</name>
-		<source>/opt/digiverso/import/BKA/Wohnbau/WWF/</source>
 		<project>Manuscript_Project</project>
 		<template>Sample_Workflow</template>
 		<s3endpoint>http://127.0.0.1:9000</s3endpoint>
@@ -79,7 +77,7 @@
 	</mapping>
 	
 	<!-- Select the command line tool which should be used to create the images. Either 'ghostscript' or 'pdftoppm'. -->
-	<imageGenerator>/opt/homebrew/bin/pdftoppm</imageGenerator>						
+	<imageGenerator>pdftoppm</imageGenerator>						
 	<!-- A parameter to add to the generator call. Repeatable -->
 	<imageGeneratorParameter>-cropbox</imageGeneratorParameter>
 	<!-- Hardcoded parameters for ghostscript are: -dUseCropBox, -SDEVICE, -r<res>, -sOutputFile, -dNOPAUSE, -dBATCH.

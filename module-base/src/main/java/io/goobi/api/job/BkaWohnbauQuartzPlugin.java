@@ -99,7 +99,7 @@ public class BkaWohnbauQuartzPlugin extends AbstractGoobiJob {
      * @throws Exception
      */
     public void analyseContent(BkaWohnbauCollection collection) throws Exception {
-        log.debug("Analysing content for: " + collection.getProject() + " from " + collection.getSource());
+        log.debug("Analysing content for: " + collection.getProject() + " from " + collection.getS3bucket() + collection.getS3prefix());
 
         // list content
         S3ClientHelper hlp = new S3ClientHelper(collection.getS3endpoint(), collection.getS3user(), collection.getS3password());
@@ -344,7 +344,7 @@ public class BkaWohnbauQuartzPlugin extends AbstractGoobiJob {
             }
 
         } catch (Exception e) {
-            log.error("Error while creating a new process for content " + collection.getSource(), e);
+            log.error("Error while creating a new process for content " + collection.getS3bucket() + collection.getS3prefix(), e);
         }
     }
 
@@ -528,7 +528,6 @@ public class BkaWohnbauQuartzPlugin extends AbstractGoobiJob {
         for (HierarchicalConfiguration cc : collectionConfigs) {
             BkaWohnbauCollection col = new BkaWohnbauCollection();
             col.setName(cc.getString("./name", "my name"));
-            col.setSource(cc.getString("./source", "my source"));
             col.setProject(cc.getString("./project", "my project"));
             col.setTemplate(cc.getString("./template", "my template"));
             col.setS3endpoint(cc.getString("./s3endpoint", "my endpoint"));

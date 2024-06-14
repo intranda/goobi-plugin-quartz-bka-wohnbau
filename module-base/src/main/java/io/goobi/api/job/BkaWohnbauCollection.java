@@ -7,7 +7,6 @@ import lombok.Setter;
 @Setter
 public class BkaWohnbauCollection {
     private String name;
-    private String source;
     private String project;
     private String template;
 
