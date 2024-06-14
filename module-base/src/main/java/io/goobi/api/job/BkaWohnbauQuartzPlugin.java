@@ -2,7 +2,6 @@ package io.goobi.api.job;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -50,7 +49,6 @@ import de.sub.goobi.persistence.managers.PropertyManager;
 import io.goobi.api.job.jsonmodel.BkaFile;
 import io.goobi.api.job.jsonmodel.DeliveryMetadata;
 import io.goobi.extension.S3ClientHelper;
-import lombok.Setter;
 import lombok.extern.log4j.Log4j2;
 import ugh.dl.ContentFile;
 import ugh.dl.DigitalDocument;
@@ -71,7 +69,6 @@ public class BkaWohnbauQuartzPlugin extends AbstractGoobiJob {
     private static final DateTimeFormatter formatterDateTime = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm:ss");
     private static final String PROPERTY = "DeliveryHistory";
     private ObjectMapper om = new ObjectMapper();
-    @Setter
     private XMLConfiguration config;
 
     /**
@@ -102,7 +99,7 @@ public class BkaWohnbauQuartzPlugin extends AbstractGoobiJob {
         log.debug("Analysing content for: " + collection.getProject() + " from " + collection.getS3bucket() + collection.getS3prefix());
 
         // list content
-        S3ClientHelper hlp = new S3ClientHelper(collection.getS3endpoint(), collection.getS3user(), collection.getS3password());
+        S3ClientHelper hlp = S3Client.getInstance(collection.getS3endpoint(), collection.getS3user(), collection.getS3password());
         List<String> content = hlp.getContentList(collection.getS3bucket(), collection.getS3prefix());
         for (String c : content) {
             // if the item is a folder analyse if it is new
@@ -119,7 +116,7 @@ public class BkaWohnbauQuartzPlugin extends AbstractGoobiJob {
 
                 // find out if a process for this item exists already
                 List<Process> processes = findProcesses(baseName);
-                if (processes.size() == 0) {
+                if (processes.isEmpty()) {
                     createNewProcess(collection, identifier, c, deliveryNumber);
                 } else {
                     updateExistingProcess(collection, identifier, c, deliveryNumber, processes.get(0));
@@ -158,14 +155,14 @@ public class BkaWohnbauQuartzPlugin extends AbstractGoobiJob {
                     }
 
                     // if this delivery is new download the full folder of json, pdf and fulltext files
-                    S3ClientHelper hlp = new S3ClientHelper(collection.getS3endpoint(), collection.getS3user(), collection.getS3password());
+                    S3ClientHelper hlp = S3Client.getInstance(collection.getS3endpoint(), collection.getS3user(), collection.getS3password());
                     Path folder = Paths.get(ConfigurationHelper.getInstance().getTemporaryFolder(), identifier + "_" + deliveryNumber);
                     hlp.downloadAllFiles(collection.getS3bucket(), collection.getS3prefix() + s3folder, folder);
                     hlp.close();
 
                     // first try to read the json file
                     List<Path> jsonfiles = StorageProvider.getInstance().listFiles(folder.toString(), wohnbauJsonFilter);
-                    if (jsonfiles.size() == 0) {
+                    if (jsonfiles.isEmpty()) {
                         throw new IOException("No JSON file found in folder " + folder + "to import.");
                     }
                     Path jsonFile = jsonfiles.get(0);
@@ -220,14 +217,14 @@ public class BkaWohnbauQuartzPlugin extends AbstractGoobiJob {
         try {
 
             // Download the full folder of json, pdf and fulltext files
-            S3ClientHelper hlp = new S3ClientHelper(collection.getS3endpoint(), collection.getS3user(), collection.getS3password());
+            S3ClientHelper hlp = S3Client.getInstance(collection.getS3endpoint(), collection.getS3user(), collection.getS3password());
             Path folder = Paths.get(ConfigurationHelper.getInstance().getTemporaryFolder(), identifier + "_" + deliveryNumber);
             hlp.downloadAllFiles(collection.getS3bucket(), collection.getS3prefix() + s3folder, folder);
             hlp.close();
 
             // first try to read the json file
             List<Path> jsonfiles = StorageProvider.getInstance().listFiles(folder.toString(), wohnbauJsonFilter);
-            if (jsonfiles.size() == 0) {
+            if (jsonfiles.isEmpty()) {
                 throw new IOException("No JSON file found in folder " + folder + "to import.");
             }
             Path jsonFile = jsonfiles.get(0);
@@ -318,7 +315,7 @@ public class BkaWohnbauQuartzPlugin extends AbstractGoobiJob {
             process.setProjectId(proj.getId());
 
             // set delivery as json-property
-            List<Delivery> dlist = new ArrayList<Delivery>();
+            List<Delivery> dlist = new ArrayList<>();
             dlist.add(new Delivery(deliveryNumber, LocalDateTime.now().format(formatterDateTime)));
             String historyJson = om.writeValueAsString(dlist);
 
@@ -502,8 +499,7 @@ public class BkaWohnbauQuartzPlugin extends AbstractGoobiJob {
         }
         criteria += " istTemplate = false ";
         Institution inst = null;
-        List<Process> processes = ProcessManager.getProcesses("prozesse.titel", criteria, 0, 1000, inst);
-        return processes;
+        return ProcessManager.getProcesses("prozesse.titel", criteria, 0, 1000, inst);
     }
 
     /**
@@ -524,7 +520,7 @@ public class BkaWohnbauQuartzPlugin extends AbstractGoobiJob {
         List<HierarchicalConfiguration> collectionConfigs = config.configurationsAt("./collection");
 
         // read parameters from config and create a list of collections
-        List<BkaWohnbauCollection> collections = new ArrayList<BkaWohnbauCollection>();
+        List<BkaWohnbauCollection> collections = new ArrayList<>();
         for (HierarchicalConfiguration cc : collectionConfigs) {
             BkaWohnbauCollection col = new BkaWohnbauCollection();
             col.setName(cc.getString("./name", "my name"));
@@ -555,8 +551,7 @@ public class BkaWohnbauQuartzPlugin extends AbstractGoobiJob {
      */
     private static final DirectoryStream.Filter<Path> wohnbauJsonFilter = path -> {
         String name = path.getFileName().toString();
-        boolean isAllowed = name.toLowerCase().endsWith(".json");
-        return isAllowed;
+        return name.toLowerCase().endsWith(".json");
     };
 
     /**
@@ -573,28 +568,6 @@ public class BkaWohnbauQuartzPlugin extends AbstractGoobiJob {
                 .atZone(ZoneId.systemDefault())
                 .toLocalDateTime();
         return localDateTime.format(formatterDateTime);
-    }
-
-    /**
-     * sample call for lokal s3 tests
-     * 
-     * @param args
-     * @throws URISyntaxException
-     * @throws Exception
-     */
-    public static void main(String[] args) throws URISyntaxException, Exception {
-        String endpoint = "http://127.0.0.1:9000";
-        String username = "admin";
-        String password = "password";
-        String bucketName = "bwsf";
-        String prefix = "";
-        // list content
-        S3ClientHelper hlp = new S3ClientHelper(endpoint, username, password);
-        List<String> content = hlp.getContentList(bucketName, prefix);
-        for (String c : content) {
-            System.out.println(c);
-        }
-
     }
 
 }
