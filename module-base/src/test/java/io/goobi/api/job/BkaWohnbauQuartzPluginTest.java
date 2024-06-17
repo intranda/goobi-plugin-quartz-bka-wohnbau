@@ -2,7 +2,9 @@ package io.goobi.api.job;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
+import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -29,14 +31,18 @@ import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.core.classloader.annotations.SuppressStaticInitializationFor;
 import org.powermock.modules.junit4.PowerMockRunner;
 
+import de.intranda.digiverso.pdf.PDFConverter;
 import de.sub.goobi.config.ConfigurationHelper;
 import de.sub.goobi.helper.BeanHelper;
+import de.sub.goobi.helper.Helper;
 import de.sub.goobi.persistence.managers.ProcessManager;
+import de.sub.goobi.persistence.managers.ProjectManager;
+import de.sub.goobi.persistence.managers.PropertyManager;
 import io.goobi.extension.S3ClientHelper;
 
 @RunWith(PowerMockRunner.class)
-@PrepareForTest({ ConfigurationHelper.class, S3ClientHelper.class, S3Client.class, FilterHelper.class, ProcessManager.class, BeanHelper.class,
-        HistoryAnalyserJob.class })
+@PrepareForTest({ ConfigurationHelper.class, S3ClientHelper.class, S3Client.class, FilterHelper.class, ProcessManager.class, ProjectManager.class,
+        PropertyManager.class, Helper.class, BeanHelper.class, HistoryAnalyserJob.class, PDFConverter.class })
 @PowerMockIgnore({ "javax.management.*", "javax.net.ssl.*", "jdk.internal.reflect.*", "com.sun.org.apache.xerces.*", "javax.xml.*", "org.xml.*",
         "org.w3c.*", "javax.crypto.*", "javax.crypto.JceSecurity" })
 @SuppressStaticInitializationFor("org.goobi.production.flow.statistics.hibernate.FilterHelper")
@@ -44,6 +50,7 @@ public class BkaWohnbauQuartzPluginTest {
 
     @Rule
     public TemporaryFolder folder = new TemporaryFolder();
+    private Path tempFolder;
 
     private static String resourcesFolder;
 
@@ -71,7 +78,7 @@ public class BkaWohnbauQuartzPluginTest {
         EasyMock.expect(configurationHelper.getDatabaseLeftTruncationCharacter()).andReturn("").anyTimes();
         EasyMock.expect(configurationHelper.getDatabaseRightTruncationCharacter()).andReturn("").anyTimes();
 
-        Path tempFolder = folder.newFolder().toPath();
+        tempFolder = folder.newFolder().toPath();
         EasyMock.expect(configurationHelper.getTemporaryFolder()).andReturn(tempFolder.toString()).anyTimes();
         EasyMock.expect(configurationHelper.getMetadataFolder()).andReturn(tempFolder.toString()).anyTimes();
 
@@ -86,6 +93,19 @@ public class BkaWohnbauQuartzPluginTest {
                 ProcessManager.getProcesses(EasyMock.anyString(), EasyMock.anyString(), EasyMock.anyInt(), EasyMock.anyInt(), EasyMock.anyObject()))
                 .andReturn(Collections.emptyList())
                 .anyTimes();
+        PowerMock.mockStatic(PropertyManager.class);
+        PropertyManager.saveProcessProperty(EasyMock.anyObject());
+
+        PowerMock.mockStatic(Helper.class);
+
+        Helper.addMessageToProcessJournal(EasyMock.anyInt(), EasyMock.anyObject(), EasyMock.anyString());
+
+        Project p = new Project();
+        p.setId(1);
+        p.setTitel("project");
+
+        PowerMock.mockStatic(ProjectManager.class);
+        EasyMock.expect(ProjectManager.getProjectByName(EasyMock.anyString())).andReturn(p).anyTimes();
 
         // process
         Process process = EasyMock.createMock(Process.class);
@@ -97,6 +117,8 @@ public class BkaWohnbauQuartzPluginTest {
         process.setIstTemplate(false);
         process.setInAuswahllisteAnzeigen(false);
         process.setProjekt(EasyMock.anyObject());
+        process.setProjekt(EasyMock.anyObject());
+        process.setProjectId(EasyMock.anyInt());
         process.setRegelsatz(EasyMock.anyObject());
         process.setDocket(EasyMock.anyObject());
         process.setExportValidator(EasyMock.anyObject());
@@ -124,11 +146,17 @@ public class BkaWohnbauQuartzPluginTest {
         EasyMock.expect(process.getOcrAltoDirectory())
                 .andReturn(Paths.get(tempFolder.toString(), "1", "ocr", "folder_alto").toString())
                 .anyTimes();
-        EasyMock.expect(process.writeMetadataFile(EasyMock.anyObject())).andReturn(true);
+
+        EasyMock.expect(process.getImportDirectory())
+                .andReturn(Paths.get(tempFolder.toString(), "1", "import").toString())
+                .anyTimes();
+
+        EasyMock.expect(process.writeMetadataFile(EasyMock.anyObject())).andReturn(true).anyTimes();
         EasyMock.expect(ProcessManager.getProcessByExactTitle(EasyMock.anyString())).andReturn(process).anyTimes();
 
         PowerMock.expectNew(Process.class).andReturn(process);
 
+        ProcessManager.saveProcess(EasyMock.anyObject());
         ProcessManager.saveProcess(EasyMock.anyObject());
         ProcessManager.saveProcess(EasyMock.anyObject());
         PowerMock.mockStatic(HistoryAnalyserJob.class);
@@ -140,13 +168,30 @@ public class BkaWohnbauQuartzPluginTest {
         List<String> s3Content = new ArrayList<>();
         s3Content.add("sample/content_01/");
         EasyMock.expect(s3.getContentList("bwsf", "")).andReturn(s3Content).anyTimes();
-
+        EasyMock.expect(s3.getContentList("wwf", "")).andReturn(Collections.emptyList()).anyTimes();
         s3.downloadAllFiles(EasyMock.anyString(), EasyMock.anyString(), EasyMock.anyObject());
         s3.close();
         s3.close();
-
+        s3.close();
         // prepare sample data
 
+        PowerMock.mockStatic(PDFConverter.class);
+        PDFConverter.setFileNamingStrategy(EasyMock.anyObject());
+        List<File> fileList = new ArrayList<>();
+        fileList.add(new File("file_001.tif"));
+        fileList.add(new File("file_002.tif"));
+        EasyMock.expect(
+                PDFConverter.writeImages(EasyMock.anyObject(File.class), EasyMock.anyObject(File.class), EasyMock.anyInt(), EasyMock.anyInt(),
+                        EasyMock.anyString(),
+                        EasyMock.anyObject(File.class), EasyMock.anyString(), EasyMock.anyObject(String[].class)))
+                .andReturn(fileList)
+                .anyTimes();
+        EasyMock.expect(
+                PDFConverter.writeAltoFiles(EasyMock.anyObject(File.class), EasyMock.anyObject(File.class), EasyMock.anyObject(),
+                        EasyMock.anyBoolean(),
+                        EasyMock.anyInt()))
+                .andReturn(fileList)
+                .anyTimes();
         Path downloadFolder = Paths.get(tempFolder.toString(), "BWSF_sample_00");
         if (!Files.exists(downloadFolder)) {
             Files.createDirectories(downloadFolder);
@@ -194,21 +239,20 @@ public class BkaWohnbauQuartzPluginTest {
     }
 
     @Test
-    public void testAnalyseContent() {
+    public void testAnalyseContent() throws Exception {
         BkaWohnbauQuartzPlugin plugin = new BkaWohnbauQuartzPlugin();
         List<BkaWohnbauCollection> collection = plugin.parseConfiguration();
         BkaWohnbauCollection col1 = collection.get(0);
-        try {
-            plugin.analyseContent(col1);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        plugin.analyseContent(col1);
 
+        assertTrue(Files.exists(Paths.get(tempFolder.toString(), "1")));
     }
 
     @Test
     public void testExecute() throws Exception {
-
+        BkaWohnbauQuartzPlugin plugin = new BkaWohnbauQuartzPlugin();
+        plugin.execute();
+        assertTrue(Files.exists(Paths.get(tempFolder.toString(), "1")));
     }
 
 }

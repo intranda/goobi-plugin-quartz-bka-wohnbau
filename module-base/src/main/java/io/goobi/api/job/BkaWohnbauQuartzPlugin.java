@@ -414,7 +414,7 @@ public class BkaWohnbauQuartzPlugin extends AbstractGoobiJob {
                 List<File> imageFiles =
                         PDFConverter.writeImages(pdf, images.toFile(), counter, 300, "tif",
                                 tempFolderOther, getImageGenerationMethod(), getImageGenerationParams());
-                List<File> altoFiles = PDFConverter.writeAltoFiles(pdf, alto.toFile(), imageFiles, false, counter);
+                PDFConverter.writeAltoFiles(pdf, alto.toFile(), imageFiles, false, counter);
 
                 // add all image files to created delivery docstruct
                 for (File image : imageFiles) {

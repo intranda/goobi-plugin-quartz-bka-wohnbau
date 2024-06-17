@@ -43,7 +43,7 @@ public class DeliveryTest {
     }
 
     @Test
-    public void testConstructor() {
+    public void testAllArgsConstructor() {
         Delivery d = new Delivery("my label", "my date");
         assertNotNull(d);
 
