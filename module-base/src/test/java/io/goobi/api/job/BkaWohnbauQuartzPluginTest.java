@@ -15,6 +15,7 @@ import java.util.List;
 import org.easymock.EasyMock;
 import org.goobi.beans.Docket;
 import org.goobi.beans.Process;
+import org.goobi.beans.Processproperty;
 import org.goobi.beans.Project;
 import org.goobi.beans.Ruleset;
 import org.goobi.production.flow.jobs.HistoryAnalyserJob;
@@ -39,6 +40,10 @@ import de.sub.goobi.persistence.managers.ProcessManager;
 import de.sub.goobi.persistence.managers.ProjectManager;
 import de.sub.goobi.persistence.managers.PropertyManager;
 import io.goobi.extension.S3ClientHelper;
+import ugh.dl.Fileformat;
+import ugh.dl.Prefs;
+import ugh.exceptions.UGHException;
+import ugh.fileformats.mets.MetsMods;
 
 @RunWith(PowerMockRunner.class)
 @PrepareForTest({ ConfigurationHelper.class, S3ClientHelper.class, S3Client.class, FilterHelper.class, ProcessManager.class, ProjectManager.class,
@@ -84,22 +89,6 @@ public class BkaWohnbauQuartzPluginTest {
 
         EasyMock.expect(configurationHelper.useS3()).andReturn(false).anyTimes();
 
-        // mock database access
-        PowerMock.mockStatic(FilterHelper.class);
-        EasyMock.expect(FilterHelper.criteriaBuilder(EasyMock.anyString(), EasyMock.anyBoolean(), EasyMock.anyBoolean(), EasyMock.anyBoolean(),
-                EasyMock.anyBoolean(), EasyMock.anyBoolean(), EasyMock.anyBoolean())).andReturn("").anyTimes();
-        PowerMock.mockStatic(ProcessManager.class);
-        EasyMock.expect(
-                ProcessManager.getProcesses(EasyMock.anyString(), EasyMock.anyString(), EasyMock.anyInt(), EasyMock.anyInt(), EasyMock.anyObject()))
-                .andReturn(Collections.emptyList())
-                .anyTimes();
-        PowerMock.mockStatic(PropertyManager.class);
-        PropertyManager.saveProcessProperty(EasyMock.anyObject());
-
-        PowerMock.mockStatic(Helper.class);
-
-        Helper.addMessageToProcessJournal(EasyMock.anyInt(), EasyMock.anyObject(), EasyMock.anyString());
-
         Project p = new Project();
         p.setId(1);
         p.setTitel("project");
@@ -108,6 +97,8 @@ public class BkaWohnbauQuartzPluginTest {
         EasyMock.expect(ProjectManager.getProjectByName(EasyMock.anyString())).andReturn(p).anyTimes();
 
         // process
+        PowerMock.mockStatic(ProcessManager.class);
+
         Process process = EasyMock.createMock(Process.class);
         Project proj = new Project();
 
@@ -134,8 +125,13 @@ public class BkaWohnbauQuartzPluginTest {
         EasyMock.expect(process.getSchritteList()).andReturn(new ArrayList<>()).anyTimes();
         EasyMock.expect(process.getVorlagen()).andReturn(new ArrayList<>()).anyTimes();
         EasyMock.expect(process.getWerkstuecke()).andReturn(new ArrayList<>()).anyTimes();
-        EasyMock.expect(process.getEigenschaftenList()).andReturn(new ArrayList<>()).anyTimes();
-        EasyMock.expect(process.getEigenschaften()).andReturn(new ArrayList<>()).anyTimes();
+        Processproperty pp = new Processproperty();
+        pp.setTitel("DeliveryHistory");
+        pp.setWert("[{ \"label\": \"Test Label\", \"date\": \"2024-05-23\" }]");
+        List<Processproperty> props = new ArrayList<>();
+        props.add(pp);
+        EasyMock.expect(process.getEigenschaftenList()).andReturn(props).anyTimes();
+        EasyMock.expect(process.getEigenschaften()).andReturn(props).anyTimes();
         EasyMock.expect(process.getTitel()).andReturn("title").anyTimes();
         EasyMock.expect(process.getId()).andReturn(1).anyTimes();
         EasyMock.expect(process.getProcessDataDirectoryIgnoreSwapping()).andReturn(Paths.get(tempFolder.toString(), "1").toString());
@@ -151,6 +147,8 @@ public class BkaWohnbauQuartzPluginTest {
                 .andReturn(Paths.get(tempFolder.toString(), "1", "import").toString())
                 .anyTimes();
 
+        EasyMock.expect(process.readMetadataFile()).andReturn(readMetadataFile()).anyTimes();
+
         EasyMock.expect(process.writeMetadataFile(EasyMock.anyObject())).andReturn(true).anyTimes();
         EasyMock.expect(ProcessManager.getProcessByExactTitle(EasyMock.anyString())).andReturn(process).anyTimes();
 
@@ -162,6 +160,31 @@ public class BkaWohnbauQuartzPluginTest {
         PowerMock.mockStatic(HistoryAnalyserJob.class);
         EasyMock.expect(HistoryAnalyserJob.updateHistoryForProzess(EasyMock.anyObject())).andReturn(true).anyTimes();
 
+        // mock database access
+        PowerMock.mockStatic(FilterHelper.class);
+        EasyMock.expect(FilterHelper.criteriaBuilder(EasyMock.anyString(), EasyMock.anyBoolean(), EasyMock.anyBoolean(), EasyMock.anyBoolean(),
+                EasyMock.anyBoolean(), EasyMock.anyBoolean(), EasyMock.anyBoolean())).andReturn("").anyTimes();
+        // first call, return empty result to test process generation
+        EasyMock.expect(
+                ProcessManager.getProcesses(EasyMock.anyString(), EasyMock.anyString(), EasyMock.anyInt(), EasyMock.anyInt(), EasyMock.anyObject()))
+                .andReturn(Collections.emptyList());
+
+        // second call, return process to test update mechanism
+        List<Process> processList = new ArrayList<>();
+        processList.add(process);
+        EasyMock.expect(
+                ProcessManager.getProcesses(EasyMock.anyString(), EasyMock.anyString(), EasyMock.anyInt(), EasyMock.anyInt(), EasyMock.anyObject()))
+                .andReturn(processList);
+
+        PowerMock.mockStatic(PropertyManager.class);
+        PropertyManager.saveProcessProperty(EasyMock.anyObject());
+        PropertyManager.saveProcessProperty(EasyMock.anyObject());
+
+        PowerMock.mockStatic(Helper.class);
+
+        Helper.addMessageToProcessJournal(EasyMock.anyInt(), EasyMock.anyObject(), EasyMock.anyString());
+        Helper.addMessageToProcessJournal(EasyMock.anyInt(), EasyMock.anyObject(), EasyMock.anyString());
+
         // s3 connection
         S3ClientHelper s3 = EasyMock.createMock(S3ClientHelper.class);
         PowerMock.expectNew(S3ClientHelper.class, EasyMock.anyString(), EasyMock.anyString(), EasyMock.anyString()).andReturn(s3).anyTimes();
@@ -170,13 +193,18 @@ public class BkaWohnbauQuartzPluginTest {
         EasyMock.expect(s3.getContentList("bwsf", "")).andReturn(s3Content).anyTimes();
         EasyMock.expect(s3.getContentList("wwf", "")).andReturn(Collections.emptyList()).anyTimes();
         s3.downloadAllFiles(EasyMock.anyString(), EasyMock.anyString(), EasyMock.anyObject());
+        s3.downloadAllFiles(EasyMock.anyString(), EasyMock.anyString(), EasyMock.anyObject());
         s3.close();
         s3.close();
         s3.close();
+        s3.close();
+
         // prepare sample data
 
         PowerMock.mockStatic(PDFConverter.class);
         PDFConverter.setFileNamingStrategy(EasyMock.anyObject());
+        PDFConverter.setFileNamingStrategy(EasyMock.anyObject());
+
         List<File> fileList = new ArrayList<>();
         fileList.add(new File("file_001.tif"));
         fileList.add(new File("file_002.tif"));
@@ -199,6 +227,7 @@ public class BkaWohnbauQuartzPluginTest {
         // copy json file
         Path jsonFile = Paths.get(resourcesFolder, "ST-1431_01.json");
         Files.copy(jsonFile, Paths.get(downloadFolder.toString(), "ST-1431_01.json"));
+
         // copy pdf files
         Path pdfFile = Paths.get(resourcesFolder, "sample.pdf");
         Files.copy(pdfFile, Paths.get(downloadFolder.toString(), "ST-1431_sonstige Dokumente_062.pdf"));
@@ -243,16 +272,45 @@ public class BkaWohnbauQuartzPluginTest {
         BkaWohnbauQuartzPlugin plugin = new BkaWohnbauQuartzPlugin();
         List<BkaWohnbauCollection> collection = plugin.parseConfiguration();
         BkaWohnbauCollection col1 = collection.get(0);
+
+        // first call, test new process creation
+        plugin.analyseContent(col1);
+        assertTrue(Files.exists(Paths.get(tempFolder.toString(), "1")));
+
+        // copy test data
+        Path downloadFolder = Paths.get(tempFolder.toString(), "BWSF_sample_00");
+        if (!Files.exists(downloadFolder)) {
+            Files.createDirectories(downloadFolder);
+        }
+        Path jsonFile = Paths.get(resourcesFolder, "ST-1431_01.json");
+        Files.copy(jsonFile, Paths.get(downloadFolder.toString(), "ST-1431_01.json"));
+
+        Path pdfFile = Paths.get(resourcesFolder, "sample.pdf");
+        Files.copy(pdfFile, Paths.get(downloadFolder.toString(), "ST-1431_sonstige Dokumente_062.pdf"));
+
+        // second call, test process update
         plugin.analyseContent(col1);
 
         assertTrue(Files.exists(Paths.get(tempFolder.toString(), "1")));
     }
 
     @Test
-    public void testExecute() throws Exception {
+    public void testExecute() {
         BkaWohnbauQuartzPlugin plugin = new BkaWohnbauQuartzPlugin();
         plugin.execute();
         assertTrue(Files.exists(Paths.get(tempFolder.toString(), "1")));
+    }
+
+    private Fileformat readMetadataFile() throws UGHException {
+        Path metadataFile = Paths.get(resourcesFolder, "meta.xml");
+        Path rulesetFile = Paths.get(resourcesFolder, "ruleset.xml");
+        Prefs prefs = new Prefs();
+        prefs.loadPrefs(rulesetFile.toString());
+
+        Fileformat fileformat = new MetsMods(prefs);
+        fileformat.read(metadataFile.toString());
+        return fileformat;
+
     }
 
 }
