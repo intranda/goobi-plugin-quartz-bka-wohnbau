@@ -3,11 +3,11 @@
   <parent>
     <groupId>io.goobi.workflow</groupId>
     <artifactId>workflow-base</artifactId>
-    <version>24.03-SNAPSHOT</version>
+    <version>24.06</version>
     <relativePath />
   </parent>
   <groupId>io.goobi.workflow.plugin</groupId>
-  <artifactId>plugin-quartz-kick-start</artifactId>
+  <artifactId>plugin-quartz-bka-wohnbau</artifactId>
   <packaging>pom</packaging>
   <modules>
     <module>module-base</module>
@@ -24,6 +24,6 @@
       <artifactId>workflow-core</artifactId>
       <version>${project.version}</version>
       <classifier>classes</classifier>
-    </dependency>
+    </dependency>        
   </dependencies>
 </project>
