@@ -12,7 +12,7 @@ This documentation describes the installation, configuration and use of the time
 To be able to use the plugin, the following files must be installed:
 
 ```bash
-/opt/digiverso/goobi/plugins/GUI/plugin-quartz-bka-wohnbau.jar
+/opt/digiverso/goobi/plugins/GUI/plugin-quartz-bka-wohnbau-job.jar
 /opt/digiverso/goobi/config/plugin_intranda_quartz_bka_wohnbau.xml
 ```
 

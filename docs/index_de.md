@@ -12,7 +12,7 @@ Die vorliegende Dokumentation beschreibt die Installation, Konfiguration und den
 Um das Plugin nutzen zu können, müssen folgende Dateien installiert werden:
 
 ```bash
-/opt/digiverso/goobi/plugins/GUI/plugin-quartz-bka-wohnbau.jar
+/opt/digiverso/goobi/plugins/GUI/plugin-quartz-bka-wohnbau-job.jar
 /opt/digiverso/goobi/config/plugin_intranda_quartz_bka_wohnbau.xml
 ```
 
