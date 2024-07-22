@@ -17,7 +17,7 @@ import org.apache.commons.configuration.HierarchicalConfiguration;
 import org.apache.commons.configuration.XMLConfiguration;
 import org.apache.commons.configuration.reloading.FileChangedReloadingStrategy;
 import org.apache.commons.configuration.tree.xpath.XPathExpressionEngine;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.goobi.beans.Institution;
 import org.goobi.beans.Process;
 import org.goobi.beans.Processproperty;
@@ -105,7 +105,13 @@ public class BkaWohnbauQuartzPlugin extends AbstractGoobiJob {
         for (String c : content) {
             // if the item is a folder analyse if it is new
             if (c.endsWith("/")) {
-                String folder = c.substring(0, c.indexOf("/"));
+                String folder;
+                if (StringUtils.isNotBlank(collection.getS3prefix())) {
+                    folder = c.replace(collection.getS3prefix(), "");
+                    folder = folder.substring(0, folder.indexOf("/"));
+                } else {
+                    folder = c.substring(0, c.indexOf("/"));
+                }
                 // get base name (geschäftszahl) and delivery count (nachlieferung)
                 String baseName = StringUtils.substringBefore(folder, "_");
                 String deliveryNumber = StringUtils.substringAfter(folder, "_");
@@ -220,7 +226,7 @@ public class BkaWohnbauQuartzPlugin extends AbstractGoobiJob {
             // Download the full folder of json, pdf and fulltext files
             S3ClientHelper hlp = S3Client.getInstance(collection.getS3endpoint(), collection.getS3user(), collection.getS3password());
             Path folder = Paths.get(ConfigurationHelper.getInstance().getTemporaryFolder(), identifier + "_" + deliveryNumber);
-            hlp.downloadAllFiles(collection.getS3bucket(), collection.getS3prefix() + s3folder, folder);
+            hlp.downloadAllFiles(collection.getS3bucket(), s3folder, folder);
             hlp.close();
 
             // first try to read the json file
