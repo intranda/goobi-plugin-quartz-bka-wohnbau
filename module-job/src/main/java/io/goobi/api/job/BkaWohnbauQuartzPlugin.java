@@ -100,38 +100,38 @@ public class BkaWohnbauQuartzPlugin extends AbstractGoobiJob {
         log.debug("Analysing content for: " + collection.getProject() + " from " + collection.getS3bucket() + collection.getS3prefix());
 
         // list content
-        S3ClientHelper hlp = S3Client.getInstance(collection.getS3endpoint(), collection.getS3user(), collection.getS3password());
-        List<String> content = hlp.getContentList(collection.getS3bucket(), collection.getS3prefix());
-        for (String c : content) {
-            // if the item is a folder analyse if it is new
-            if (c.endsWith("/")) {
-                String folder;
-                if (StringUtils.isNotBlank(collection.getS3prefix())) {
-                    folder = c.replace(collection.getS3prefix(), "");
-                    folder = folder.substring(0, folder.indexOf("/"));
-                } else {
-                    folder = c.substring(0, c.indexOf("/"));
-                }
-                // get base name (geschäftszahl) and delivery count (nachlieferung)
-                String baseName = StringUtils.substringBefore(folder, "_");
-                String deliveryNumber = StringUtils.substringAfter(folder, "_");
-                if (StringUtils.isBlank(deliveryNumber)) {
-                    deliveryNumber = "00";
-                }
-                String identifier = collection.getName() + "_" + baseName;
-                log.debug("Analysing folder " + folder + " for process " + baseName + " as delivery " + deliveryNumber);
+        try (S3ClientHelper hlp = S3Client.getInstance(collection.getS3endpoint(), collection.getS3user(), collection.getS3password())) {
+            List<String> content = hlp.getContentList(collection.getS3bucket(), collection.getS3prefix());
+            for (String c : content) {
+                // if the item is a folder analyse if it is new
+                if (c.endsWith("/")) {
+                    String folder;
+                    if (StringUtils.isNotBlank(collection.getS3prefix())) {
+                        folder = c.replace(collection.getS3prefix(), "");
+                        folder = folder.substring(0, folder.indexOf("/"));
+                    } else {
+                        folder = c.substring(0, c.indexOf("/"));
+                    }
+                    // get base name (geschäftszahl) and delivery count (nachlieferung)
+                    String baseName = StringUtils.substringBefore(folder, "_");
+                    String deliveryNumber = StringUtils.substringAfter(folder, "_");
+                    if (StringUtils.isBlank(deliveryNumber)) {
+                        deliveryNumber = "00";
+                    }
+                    String identifier = collection.getName() + "_" + baseName;
+                    log.debug("Analysing folder " + folder + " for process " + baseName + " as delivery " + deliveryNumber);
 
-                // find out if a process for this item exists already
-                List<Process> processes = findProcesses(baseName);
-                if (processes.isEmpty()) {
-                    createNewProcess(collection, identifier, c, deliveryNumber);
-                } else {
-                    updateExistingProcess(collection, identifier, c, deliveryNumber, processes.get(0));
+                    // find out if a process for this item exists already
+                    List<Process> processes = findProcesses(baseName);
+                    if (processes.isEmpty()) {
+                        createNewProcess(collection, identifier, c, deliveryNumber, hlp);
+                    } else {
+                        updateExistingProcess(collection, identifier, c, deliveryNumber, processes.get(0), hlp);
+                    }
                 }
+
             }
-
         }
-        hlp.close();
     }
 
     /**
@@ -143,7 +143,8 @@ public class BkaWohnbauQuartzPlugin extends AbstractGoobiJob {
      * @param deliveryNumber
      * @param process
      */
-    private void updateExistingProcess(BkaWohnbauCollection collection, String identifier, String s3folder, String deliveryNumber, Process process) {
+    private void updateExistingProcess(BkaWohnbauCollection collection, String identifier, String s3folder, String deliveryNumber, Process process,
+            S3ClientHelper hlp) {
         try {
 
             // read existing json-Property
@@ -162,10 +163,8 @@ public class BkaWohnbauQuartzPlugin extends AbstractGoobiJob {
                     }
 
                     // if this delivery is new download the full folder of json, pdf and fulltext files
-                    S3ClientHelper hlp = S3Client.getInstance(collection.getS3endpoint(), collection.getS3user(), collection.getS3password());
                     Path folder = Paths.get(ConfigurationHelper.getInstance().getTemporaryFolder(), identifier + "_" + deliveryNumber);
                     hlp.downloadAllFiles(collection.getS3bucket(), collection.getS3prefix() + s3folder, folder);
-                    hlp.close();
 
                     // first try to read the json file
                     List<Path> jsonfiles = StorageProvider.getInstance().listFiles(folder.toString(), wohnbauJsonFilter);
@@ -220,14 +219,12 @@ public class BkaWohnbauQuartzPlugin extends AbstractGoobiJob {
      * @param project
      * @param source
      */
-    private void createNewProcess(BkaWohnbauCollection collection, String identifier, String s3folder, String deliveryNumber) {
+    private void createNewProcess(BkaWohnbauCollection collection, String identifier, String s3folder, String deliveryNumber, S3ClientHelper hlp) {
         try {
 
             // Download the full folder of json, pdf and fulltext files
-            S3ClientHelper hlp = S3Client.getInstance(collection.getS3endpoint(), collection.getS3user(), collection.getS3password());
             Path folder = Paths.get(ConfigurationHelper.getInstance().getTemporaryFolder(), identifier + "_" + deliveryNumber);
             hlp.downloadAllFiles(collection.getS3bucket(), s3folder, folder);
-            hlp.close();
 
             // first try to read the json file
             List<Path> jsonfiles = StorageProvider.getInstance().listFiles(folder.toString(), wohnbauJsonFilter);
