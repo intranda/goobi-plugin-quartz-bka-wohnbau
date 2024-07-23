@@ -164,7 +164,7 @@ public class BkaWohnbauQuartzPlugin extends AbstractGoobiJob {
 
                     // if this delivery is new download the full folder of json, pdf and fulltext files
                     Path folder = Paths.get(ConfigurationHelper.getInstance().getTemporaryFolder(), identifier + "_" + deliveryNumber);
-                    hlp.downloadAllFiles(collection.getS3bucket(), collection.getS3prefix() + s3folder, folder);
+                    hlp.downloadAllFiles(collection.getS3bucket(), s3folder, folder);
 
                     // first try to read the json file
                     List<Path> jsonfiles = StorageProvider.getInstance().listFiles(folder.toString(), wohnbauJsonFilter);
@@ -385,6 +385,17 @@ public class BkaWohnbauQuartzPlugin extends AbstractGoobiJob {
 
         // add one document per provided pdf file and add metadata
         int counter = 1;
+
+        Path tmpImages = Paths.get(folder.toString(), "images");
+
+        Path tmpAlto = Paths.get(folder.toString(), "alto");
+        if (!StorageProvider.getInstance().isFileExists(tmpImages)) {
+            StorageProvider.getInstance().createDirectories(tmpImages);
+        }
+        if (!StorageProvider.getInstance().isFileExists(tmpAlto)) {
+            StorageProvider.getInstance().createDirectories(tmpAlto);
+        }
+
         for (BkaFile bf : dm.getFiles()) {
 
             // if the current file is a PDF file
@@ -405,19 +416,14 @@ public class BkaWohnbauQuartzPlugin extends AbstractGoobiJob {
                 addMetadata(bkaDocument, prefs, "mimetype", bf.getMimetype());
                 addMetadata(bkaDocument, prefs, "title", StringUtils.substringBefore(bf.getFilename(), "."));
 
-                // extract pdf file
+                // extract pdf file into temporary folder
                 File pdf = new File(folder.toFile(), bf.getFilename());
-                Path images = Paths.get(process.getImagesOrigDirectory(false));
-                Path alto = Paths.get(process.getOcrAltoDirectory());
-                if (!StorageProvider.getInstance().isFileExists(alto)) {
-                    StorageProvider.getInstance().createDirectories(alto);
-                }
 
                 File tempFolderOther = new File(ConfigurationHelper.getInstance().getTemporaryFolder());
                 List<File> imageFiles =
-                        PDFConverter.writeImages(pdf, images.toFile(), counter, 300, "tif",
+                        PDFConverter.writeImages(pdf, tmpImages.toFile(), counter, 300, "tif",
                                 tempFolderOther, getImageGenerationMethod(), getImageGenerationParams());
-                PDFConverter.writeAltoFiles(pdf, alto.toFile(), imageFiles, false, counter);
+                PDFConverter.writeAltoFiles(pdf, tmpAlto.toFile(), imageFiles, false, counter);
 
                 // add all image files to created delivery docstruct
                 for (File image : imageFiles) {
@@ -448,9 +454,17 @@ public class BkaWohnbauQuartzPlugin extends AbstractGoobiJob {
                 }
 
                 bkaDelivery.addChild(bkaDocument);
+
             }
         }
+        // copy extracted files to destination
+        Path finalImages = Paths.get(process.getImagesOrigDirectory(false));
+        Path finalAlto = Paths.get(process.getOcrAltoDirectory());
 
+        StorageProvider.getInstance().uploadDirectory(tmpImages, finalImages);
+        StorageProvider.getInstance().uploadDirectory(tmpAlto, finalAlto);
+        StorageProvider.getInstance().deleteDir(tmpImages);
+        StorageProvider.getInstance().deleteDir(tmpAlto);
     }
 
     /**
