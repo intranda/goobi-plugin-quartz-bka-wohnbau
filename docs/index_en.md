@@ -153,7 +153,7 @@ The plugin is configured in the file `plugin_intranda_quartz_bka_wohnbau.xml` as
 
 
 ### Configuration of the time control
-The plugin can be repeated automatically or executed manually. Manual execution is possible by calling it within the menu item `Administration` - `Regular tasks`. Automatic execution, on the other hand, must take place within the configuration file `goobi_config.properties`. To do this, the configuration must look like this if the plugin is to be executed once every hour:
+The plugin can be repeated automatically or executed manually. Manual execution is possible by calling it within the menu item `Administration` - `Periodic tasks`. Automatic execution, on the other hand, must take place within the configuration file `goobi_config.properties`. To do this, the configuration must look like this if the plugin is to be executed once every hour:
 
 ```properties
 intranda_quartz_bka_wohnbau=0 0 */1 * * ?
@@ -162,12 +162,12 @@ intranda_quartz_bka_wohnbau=0 0 */1 * * ?
 As an example, some further configurations for a different execution time are listed here (cron syntax):
 
 ```properties
-# Ausführung alle 5 Minuten
+# Execution every 5 minutes
 intranda_quartz_exportEadFile=0 */5 * * * ?
 
-# Ausführung jede Stunde
+# Execution every hour
 harvesterJob=0 0 */1 * * ? 
 
-# Ausführung täglich um Mitternacht 
+# Execution daily at midnight 
 dailyDelayJob=0 0 0 * * ? 
 ```
