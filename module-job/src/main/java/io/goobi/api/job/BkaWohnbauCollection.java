@@ -15,4 +15,5 @@ public class BkaWohnbauCollection {
     private String s3password;
     private String s3bucket;
     private String s3prefix;
+    private boolean s3forcePathStyle;
 }

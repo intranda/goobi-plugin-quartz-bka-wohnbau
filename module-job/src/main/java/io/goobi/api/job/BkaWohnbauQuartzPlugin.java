@@ -100,13 +100,17 @@ public class BkaWohnbauQuartzPlugin extends AbstractGoobiJob {
         log.debug("Analysing content for: " + collection.getProject() + " from " + collection.getS3bucket() + collection.getS3prefix());
 
         // list content
-        try (S3ClientHelper hlp = S3Client.getInstance(collection.getS3endpoint(), collection.getS3user(), collection.getS3password())) {
+        try (S3ClientHelper hlp = S3Client.getInstance(collection.getS3endpoint(), collection.getS3user(), collection.getS3password(),
+                collection.isS3forcePathStyle())) {
             List<String> content = hlp.getContentList(collection.getS3bucket(), collection.getS3prefix());
             for (String c : content) {
                 // if the item is a folder analyse if it is new
                 if (c.endsWith("/")) {
                     String folder;
                     if (StringUtils.isNotBlank(collection.getS3prefix())) {
+                        if (c.equals(collection.getS3prefix())) {
+                            continue;
+                        }
                         folder = c.replace(collection.getS3prefix(), "");
                         folder = folder.substring(0, folder.indexOf("/"));
                     } else {
@@ -552,6 +556,7 @@ public class BkaWohnbauQuartzPlugin extends AbstractGoobiJob {
             col.setS3password(cc.getString("./s3password", "my password"));
             col.setS3bucket(cc.getString("./s3bucket", "my bucket"));
             col.setS3prefix(cc.getString("./s3prefix"));
+            col.setS3forcePathStyle(cc.getBoolean("./s3forcePathStyle", false));
             collections.add(col);
         }
         return collections;
