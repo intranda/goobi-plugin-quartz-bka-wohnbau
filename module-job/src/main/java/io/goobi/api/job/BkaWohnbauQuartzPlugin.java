@@ -267,6 +267,7 @@ public class BkaWohnbauQuartzPlugin extends AbstractGoobiJob {
             addMetadata(logical, prefs, "geschaeftszahl", dm.getGeschaeftszahl());
             addMetadata(logical, prefs, "bezugszahlen", dm.getBezugszahlen());
             addMetadata(logical, prefs, "anmerkungRecord", dm.getAnmerkung());
+            addMetadata(logical, prefs, "gebinde", dm.getGebinde());
             addMetadata(logical, prefs, "title", dm.getFondname() + " - " + dm.getGeschaeftszahl());
 
             // get grundbuch information for record

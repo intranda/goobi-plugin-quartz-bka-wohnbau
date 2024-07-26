@@ -1179,6 +1179,11 @@
     <language name="de">Fondname</language>
     <language name="en">Fondname</language>
   </MetadataType>
+    <MetadataType>
+    <Name>BkaGebinde</Name>
+    <language name="de">Gebinde</language>
+    <language name="en">Gebinde</language>
+  </MetadataType>
   <MetadataType>
     <Name>BkaBundesland</Name>
     <language name="de">Bundesland</language>
@@ -1373,6 +1378,7 @@
     <metadata DefaultDisplay="false" num="*">singleDigCollection</metadata>
     <metadata DefaultDisplay="true" num="1o">TitleDocMain</metadata>
     <metadata DefaultDisplay="false" num="1o">BkaFondname</metadata>
+    <metadata DefaultDisplay="false" num="1o">BkaGebinde</metadata>
     <metadata DefaultDisplay="false" num="1o">BkaBundesland</metadata>
     <metadata DefaultDisplay="false" num="1o">BkaGeschaeftszahl</metadata>
     <metadata DefaultDisplay="false" num="1o">BkaBezugszahlen</metadata>

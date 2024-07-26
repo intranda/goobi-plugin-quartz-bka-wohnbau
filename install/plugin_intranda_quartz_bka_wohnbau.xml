@@ -51,6 +51,7 @@
 		<collection>singleDigCollection</collection>
 		<title>TitleDocMain</title>
 		<fondname>BkaFondname</fondname>
+        <gebinde>BkaGebinde</gebinde>
 	    <bundesland>BkaBundesland</bundesland>
 	    <geschaeftszahl>BkaGeschaeftszahl</geschaeftszahl>
 	    <bezugszahlen>BkaBezugszahlen</bezugszahlen>

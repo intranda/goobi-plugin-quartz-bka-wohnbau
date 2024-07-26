@@ -28,6 +28,9 @@ public class DeliveryMetadata {
     @JsonProperty("anmerkung")
     private String anmerkung;
 
+    @JsonProperty("gebinde")
+    private String gebinde;
+
     @JsonProperty("grundbuch")
     private Grundbuch grundbuch;
 
