@@ -126,11 +126,12 @@ public class BkaWohnbauQuartzPlugin extends AbstractGoobiJob {
                     log.debug("Analysing folder " + folder + " for process " + baseName + " as delivery " + deliveryNumber);
 
                     // find out if a process for this item exists already
-                    List<Process> processes = findProcesses(baseName);
-                    if (processes.isEmpty()) {
+                    Process proc = ProcessManager.getProcessByExactTitle(identifier);
+
+                    if (proc == null) {
                         createNewProcess(collection, identifier, c, deliveryNumber, hlp);
                     } else {
-                        updateExistingProcess(collection, identifier, c, deliveryNumber, processes.get(0), hlp);
+                        updateExistingProcess(collection, identifier, c, deliveryNumber, proc, hlp);
                     }
                 }
 
