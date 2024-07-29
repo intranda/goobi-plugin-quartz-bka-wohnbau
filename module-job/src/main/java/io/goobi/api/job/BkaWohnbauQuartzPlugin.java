@@ -18,14 +18,12 @@ import org.apache.commons.configuration.XMLConfiguration;
 import org.apache.commons.configuration.reloading.FileChangedReloadingStrategy;
 import org.apache.commons.configuration.tree.xpath.XPathExpressionEngine;
 import org.apache.commons.lang3.StringUtils;
-import org.goobi.beans.Institution;
 import org.goobi.beans.Process;
 import org.goobi.beans.Processproperty;
 import org.goobi.beans.Project;
 import org.goobi.beans.Step;
 import org.goobi.production.enums.LogType;
 import org.goobi.production.flow.jobs.AbstractGoobiJob;
-import org.goobi.production.flow.statistics.hibernate.FilterHelper;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -512,21 +510,6 @@ public class BkaWohnbauQuartzPlugin extends AbstractGoobiJob {
                 ds.addMetadata(id);
             }
         }
-    }
-
-    /**
-     * find processes with a given search string
-     *
-     * @return
-     */
-    private List<Process> findProcesses(String filter) {
-        String criteria = FilterHelper.criteriaBuilder(filter, false, null, null, null, true, false);
-        if (!criteria.isEmpty()) {
-            criteria += " AND ";
-        }
-        criteria += " istTemplate = false ";
-        Institution inst = null;
-        return ProcessManager.getProcesses("prozesse.titel", criteria, 0, 1000, inst);
     }
 
     /**
