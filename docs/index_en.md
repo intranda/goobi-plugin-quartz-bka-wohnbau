@@ -1,7 +1,6 @@
 ---
 title: Data import for the Austrian Housing Promotion Fund
 identifier: intranda_quartz_bka_wohnbau
-github: https://github.com/intranda/plugin-quartz-bka-wohnbau
 description: Time-controlled plugin for the repeated import of folder structures from an S3 storage for the import of housing subsidy files in Austria.
 published: true
 ---
@@ -13,7 +12,7 @@ This documentation describes the installation, configuration and use of the time
 To be able to use the plugin, the following files must be installed:
 
 ```bash
-/opt/digiverso/goobi/plugins/GUI/plugin-quartz-bka-wohnbau.jar
+/opt/digiverso/goobi/plugins/GUI/plugin-quartz-bka-wohnbau-job.jar
 /opt/digiverso/goobi/config/plugin_intranda_quartz_bka_wohnbau.xml
 ```
 
@@ -154,7 +153,7 @@ The plugin is configured in the file `plugin_intranda_quartz_bka_wohnbau.xml` as
 
 
 ### Configuration of the time control
-The plugin can be repeated automatically or executed manually. Manual execution is possible by calling it within the menu item `Administration` - `Regular tasks`. Automatic execution, on the other hand, must take place within the configuration file `goobi_config.properties`. To do this, the configuration must look like this if the plugin is to be executed once every hour:
+The plugin can be repeated automatically or executed manually. Manual execution is possible by calling it within the menu item `Administration` - `Periodic tasks`. Automatic execution, on the other hand, must take place within the configuration file `goobi_config.properties`. To do this, the configuration must look like this if the plugin is to be executed once every hour:
 
 ```properties
 intranda_quartz_bka_wohnbau=0 0 */1 * * ?
@@ -163,12 +162,12 @@ intranda_quartz_bka_wohnbau=0 0 */1 * * ?
 As an example, some further configurations for a different execution time are listed here (cron syntax):
 
 ```properties
-# Ausführung alle 5 Minuten
+# Execution every 5 minutes
 intranda_quartz_exportEadFile=0 */5 * * * ?
 
-# Ausführung jede Stunde
+# Execution every hour
 harvesterJob=0 0 */1 * * ? 
 
-# Ausführung täglich um Mitternacht 
+# Execution daily at midnight 
 dailyDelayJob=0 0 0 * * ? 
 ```

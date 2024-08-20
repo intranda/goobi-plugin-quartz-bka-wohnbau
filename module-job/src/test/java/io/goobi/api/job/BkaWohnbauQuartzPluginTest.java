@@ -187,7 +187,9 @@ public class BkaWohnbauQuartzPluginTest {
 
         // s3 connection
         S3ClientHelper s3 = EasyMock.createMock(S3ClientHelper.class);
-        PowerMock.expectNew(S3ClientHelper.class, EasyMock.anyString(), EasyMock.anyString(), EasyMock.anyString()).andReturn(s3).anyTimes();
+        PowerMock.expectNew(S3ClientHelper.class, EasyMock.anyString(), EasyMock.anyString(), EasyMock.anyString(), EasyMock.anyBoolean())
+                .andReturn(s3)
+                .anyTimes();
         List<String> s3Content = new ArrayList<>();
         s3Content.add("sample/content_01/");
         EasyMock.expect(s3.getContentList("bwsf", "")).andReturn(s3Content).anyTimes();
