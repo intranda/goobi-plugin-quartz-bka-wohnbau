@@ -15,8 +15,8 @@ Detail                      | Description
 **Plugin identifier**       | intranda_quartz_bka_wohnbau
 **Plugin type**             | quartz
 **Licence**                 | GPL 2.0 or newer
-**Documentation (German)**  | https://docs.goobi.io/workflow-plugins/v/eng/quartz/goobi-plugin-quartz-bka-wohnbau
-**Documentation (English)** | https://docs.goobi.io/workflow-plugins/v/ger/quartz/goobi-plugin-quartz-bka-wohnbau
+**Documentation (German)**  | https://docs.goobi.io/workflow-plugins/v/ger/quartz/goobi-plugin-quartz-bka-wohnbau
+**Documentation (English)** | https://docs.goobi.io/workflow-plugins/v/eng/quartz/goobi-plugin-quartz-bka-wohnbau
 
 ## Goobi details
 
