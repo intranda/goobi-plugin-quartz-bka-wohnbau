@@ -18,8 +18,9 @@ import org.apache.commons.configuration.XMLConfiguration;
 import org.apache.commons.configuration.reloading.FileChangedReloadingStrategy;
 import org.apache.commons.configuration.tree.xpath.XPathExpressionEngine;
 import org.apache.commons.lang3.StringUtils;
+import org.goobi.beans.GoobiProperty;
+import org.goobi.beans.GoobiProperty.PropertyOwnerType;
 import org.goobi.beans.Process;
-import org.goobi.beans.Processproperty;
 import org.goobi.beans.Project;
 import org.goobi.beans.Step;
 import org.goobi.production.enums.LogType;
@@ -151,9 +152,9 @@ public class BkaWohnbauQuartzPlugin extends AbstractGoobiJob {
         try {
 
             // read existing json-Property
-            for (Processproperty pp : process.getEigenschaften()) {
-                if (PROPERTY.equals(pp.getTitel())) {
-                    List<Delivery> dlist = om.readValue(pp.getWert(), new TypeReference<List<Delivery>>() {
+            for (GoobiProperty pp : process.getProperties()) {
+                if (PROPERTY.equals(pp.getPropertyName())) {
+                    List<Delivery> dlist = om.readValue(pp.getPropertyValue(), new TypeReference<List<Delivery>>() {
                     });
 
                     // check if the same delivery happened already and cancel import then
@@ -198,8 +199,8 @@ public class BkaWohnbauQuartzPlugin extends AbstractGoobiJob {
                     // update the property to include this new delivery
                     dlist.add(new Delivery(deliveryNumber, LocalDateTime.now().format(formatterDateTime)));
                     String historyJson = om.writeValueAsString(dlist);
-                    pp.setWert(historyJson);
-                    PropertyManager.saveProcessProperty(pp);
+                    pp.setPropertyValue(historyJson);
+                    PropertyManager.saveProperty(pp);
 
                     // delete temporary copied data
                     StorageProvider.getInstance().deleteDir(folder);
@@ -327,11 +328,11 @@ public class BkaWohnbauQuartzPlugin extends AbstractGoobiJob {
             dlist.add(new Delivery(deliveryNumber, LocalDateTime.now().format(formatterDateTime)));
             String historyJson = om.writeValueAsString(dlist);
 
-            Processproperty pp = new Processproperty();
-            pp.setTitel(PROPERTY);
-            pp.setWert(historyJson);
-            pp.setProzess(process);
-            PropertyManager.saveProcessProperty(pp);
+            GoobiProperty pp = new GoobiProperty(PropertyOwnerType.PROCESS);
+            pp.setPropertyName(PROPERTY);
+            pp.setPropertyValue(historyJson);
+            pp.setOwner(process);
+            PropertyManager.saveProperty(pp);
 
             // update process
             ProcessManager.saveProcess(process);
