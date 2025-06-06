@@ -127,8 +127,7 @@ public class BkaWohnbauQuartzPluginTest {
         pp.setPropertyValue("[{ \"label\": \"Test Label\", \"date\": \"2024-05-23\" }]");
         List<GoobiProperty> props = new ArrayList<>();
         props.add(pp);
-        EasyMock.expect(process.getEigenschaftenList()).andReturn(props).anyTimes();
-        EasyMock.expect(process.getEigenschaften()).andReturn(props).anyTimes();
+        EasyMock.expect(process.getProperties()).andReturn(props).anyTimes();
         EasyMock.expect(process.getTitel()).andReturn("title").anyTimes();
         EasyMock.expect(process.getId()).andReturn(1).anyTimes();
         EasyMock.expect(process.getProcessDataDirectoryIgnoreSwapping()).andReturn(Paths.get(tempFolder.toString(), "1").toString());
