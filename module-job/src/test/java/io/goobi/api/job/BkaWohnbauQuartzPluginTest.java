@@ -14,8 +14,9 @@ import java.util.List;
 
 import org.easymock.EasyMock;
 import org.goobi.beans.Docket;
+import org.goobi.beans.GoobiProperty;
+import org.goobi.beans.GoobiProperty.PropertyOwnerType;
 import org.goobi.beans.Process;
-import org.goobi.beans.Processproperty;
 import org.goobi.beans.Project;
 import org.goobi.beans.Ruleset;
 import org.goobi.production.flow.jobs.HistoryAnalyserJob;
@@ -114,8 +115,6 @@ public class BkaWohnbauQuartzPluginTest {
         process.setDocket(EasyMock.anyObject());
         process.setExportValidator(EasyMock.anyObject());
         process.setSchritte(EasyMock.anyObject());
-        process.setVorlagen(EasyMock.anyObject());
-        process.setWerkstuecke(EasyMock.anyObject());
         process.setEigenschaften(EasyMock.anyObject());
 
         EasyMock.expect(process.getRegelsatz()).andReturn(r).anyTimes();
@@ -123,15 +122,12 @@ public class BkaWohnbauQuartzPluginTest {
         EasyMock.expect(process.getDocket()).andReturn(new Docket()).anyTimes();
         EasyMock.expect(process.getExportValidator()).andReturn(null);
         EasyMock.expect(process.getSchritteList()).andReturn(new ArrayList<>()).anyTimes();
-        EasyMock.expect(process.getVorlagen()).andReturn(new ArrayList<>()).anyTimes();
-        EasyMock.expect(process.getWerkstuecke()).andReturn(new ArrayList<>()).anyTimes();
-        Processproperty pp = new Processproperty();
-        pp.setTitel("DeliveryHistory");
-        pp.setWert("[{ \"label\": \"Test Label\", \"date\": \"2024-05-23\" }]");
-        List<Processproperty> props = new ArrayList<>();
+        GoobiProperty pp = new GoobiProperty(PropertyOwnerType.PROCESS);
+        pp.setPropertyName("DeliveryHistory");
+        pp.setPropertyValue("[{ \"label\": \"Test Label\", \"date\": \"2024-05-23\" }]");
+        List<GoobiProperty> props = new ArrayList<>();
         props.add(pp);
-        EasyMock.expect(process.getEigenschaftenList()).andReturn(props).anyTimes();
-        EasyMock.expect(process.getEigenschaften()).andReturn(props).anyTimes();
+        EasyMock.expect(process.getProperties()).andReturn(props).anyTimes();
         EasyMock.expect(process.getTitel()).andReturn("title").anyTimes();
         EasyMock.expect(process.getId()).andReturn(1).anyTimes();
         EasyMock.expect(process.getProcessDataDirectoryIgnoreSwapping()).andReturn(Paths.get(tempFolder.toString(), "1").toString());
@@ -177,8 +173,8 @@ public class BkaWohnbauQuartzPluginTest {
                 .andReturn(processList);
 
         PowerMock.mockStatic(PropertyManager.class);
-        PropertyManager.saveProcessProperty(EasyMock.anyObject());
-        PropertyManager.saveProcessProperty(EasyMock.anyObject());
+        PropertyManager.saveProperty(EasyMock.anyObject());
+        PropertyManager.saveProperty(EasyMock.anyObject());
 
         PowerMock.mockStatic(Helper.class);
 
