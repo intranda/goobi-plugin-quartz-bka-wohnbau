@@ -3,6 +3,10 @@ title: Data import for the Austrian Housing Promotion Fund
 identifier: intranda_quartz_bka_wohnbau
 description: Time-controlled plugin for the repeated import of folder structures from an S3 storage for the import of housing subsidy files in Austria.
 published: true
+keywords:
+    - Goobi workflow
+    - Plugin
+    - Quartz Plugin
 ---
 
 ## Introduction

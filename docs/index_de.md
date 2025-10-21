@@ -3,6 +3,10 @@ title: Datenimport für Wohnbauförderungsfond Österreich
 identifier: intranda_quartz_bka_wohnbau
 description: Zeitgesteuertes Plugin für den wiederholten Import von Ordnerstrukturen aus einem S3 Speicher für den Import von Wohnbauförderungsakten in Österreich.
 published: true
+keywords:
+    - Goobi workflow
+    - Plugin
+    - Quartz Plugin
 ---
 
 ## Einführung
