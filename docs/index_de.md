@@ -25,7 +25,7 @@ Nach der Installation steht das Plugin innerhalb des Menüpunkts `Administration
 ![Plugin innerhalb der Nutzeroberfläche](screen_de.png)
 
 ## Überblick und Funktionsweise
-Bei diesem Plugin handelt es sich um ein sogenanntes `Quartz-Plugin` für eine wiederholte automatische Ausführung. Bei jedem Aufruf geht das Plugin von aus, dass konfigurierte `Collections` innerhalb eines S3-Buckets Verzeichnisse beinhalten. Jedes Verzeichnis entspricht hierbei einer `Lieferung` für eine ggf. schon bestehende `Akte`. Das nachfolgende Beispiel enspricht hierbei der `zweiten Lieferung` für die Akte `ST-1431`
+Bei diesem Plugin handelt es sich um ein sogenanntes `Quartz-Plugin` für eine wiederholte automatische Ausführung. Bei jedem Aufruf geht das Plugin von aus, dass konfigurierte `Collections` innerhalb eines S3-Buckets Verzeichnisse beinhalten. Jedes Verzeichnis entspricht hierbei einer `Lieferung` für eine ggf. schon bestehende `Akte`. Das nachfolgende Beispiel entspricht hierbei der `zweiten Lieferung` für die Akte `ST-1431`
 
 ```bash
 /BWSF/ST-1431_02
@@ -43,7 +43,7 @@ Die Bilddatei werden innerhalb des `master`-Verzeichnisses des Vorgangs gespeich
 
 
 ## Konfiguration
-Die Konfiguration erstreckt sich über zwei Bereiche. Einerseits wird die Funktion des Plugins in dessen Konfigurationsdatei festgelegt. Andererseits erfolgt in einer zentralen Goobi-Konfiguration die Zeitsteuerung, die festlegt, wann dieses Plugin regelmäßig gestart werden soll, um automatisch zu laufen.
+Die Konfiguration erstreckt sich über zwei Bereiche. Einerseits wird die Funktion des Plugins in dessen Konfigurationsdatei festgelegt. Andererseits erfolgt in einer zentralen Goobi-Konfiguration die Zeitsteuerung, die festlegt, wann dieses Plugin regelmäßig gestartet werden soll, um automatisch zu laufen.
 
 ### Konfiguration des Plugins
 Die Konfiguration des Plugins erfolgt in der Datei `plugin_intranda_quartz_bka_wohnbau.xml` wie hier aufgezeigt:

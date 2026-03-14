@@ -72,7 +72,7 @@ The plugin is configured in the file `plugin_intranda_quartz_bka_wohnbau.xml` as
 		<!-- Password for the S3 access -->
 		<s3password>goobigoobi</s3password>
 
-		<!-- Bucket name to use as sourcee -->
+		<!-- Bucket name to use as source -->
 		<s3bucket>bwsf</s3bucket>
 		
 		<!-- Prefix (folder) to use where the content is located, can be empty -->
